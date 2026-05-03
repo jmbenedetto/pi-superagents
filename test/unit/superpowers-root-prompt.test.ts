@@ -49,7 +49,7 @@ void describe("Superpowers root prompt", () => {
 		assert.match(prompt, /If the tool returns unavailable, show one concise warning/);
 		assert.doesNotMatch(prompt, /exactly once/);
 		assert.match(prompt, /must use the `subagent` tool/);
-		assert.match(prompt, /pass `useTestDrivenDevelopment: true` in every `subagent` call/);
+		assert.match(prompt, /do not pass Superagents-only parameters such as `useTestDrivenDevelopment`/);
 		assert.match(prompt, /Worktree isolation is ENABLED/);
 		assert.match(prompt, /Task tracking is the responsibility of the root session/);
 	});

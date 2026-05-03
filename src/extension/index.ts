@@ -140,6 +140,36 @@ function discoverEntrypointCommandNames(cwd: string): string[] {
 		.filter((commandName): commandName is string => Boolean(commandName));
 }
 
+/**
+ * Make bundled Superpowers role agents visible to the external PI Sub-Agents extension.
+ *
+ * Pi packages do not currently expose an `agents` resource type. PI Sub-Agents
+ * discovers agents from `.agents/agents` and `~/.agents/agents`, so this fork
+ * mirrors bundled `agents/sp-*.md` files into the user's global
+ * `~/.agents/agents` directory by default. Existing files are never overwritten.
+ *
+ * @param packageRoot Root directory containing the bundled `agents/` folder.
+ * @returns Names of agent files copied during this call.
+ */
+function ensureUserSuperpowersRoleAgents(packageRoot: string): string[] {
+	const bundledAgentsDir = path.join(packageRoot, "agents");
+	if (!fs.existsSync(bundledAgentsDir)) return [];
+
+	const userAgentsDir = path.join(os.homedir(), ".agents", "agents");
+	fs.mkdirSync(userAgentsDir, { recursive: true });
+
+	const copied: string[] = [];
+	for (const fileName of fs.readdirSync(bundledAgentsDir)) {
+		if (!/^sp-.*\.md$/.test(fileName)) continue;
+		const sourcePath = path.join(bundledAgentsDir, fileName);
+		const targetPath = path.join(userAgentsDir, fileName);
+		if (fs.existsSync(targetPath)) continue;
+		fs.copyFileSync(sourcePath, targetPath);
+		copied.push(fileName);
+	}
+	return copied;
+}
+
 const SuperpowersPlanReviewParams = Type.Object({
 	planContent: Type.String({ description: "Final Superpowers implementation plan content to review." }),
 	planFilePath: Type.Optional(Type.String({ description: "Saved plan file path for the final Superpowers plan when available." })),
@@ -197,6 +227,7 @@ function commandNameForInterceptedSkill(skillName: string): string | undefined {
  */
 export default function registerSubagentExtension(pi: ExtensionAPI): void {
 	const extensionEntryDir = path.dirname(fileURLToPath(import.meta.url));
+	const packageRoot = resolvePackageRoot(extensionEntryDir);
 
 	// Create state first so config store can reference live session cwd
 	const state: SubagentState = {
@@ -208,7 +239,7 @@ export default function registerSubagentExtension(pi: ExtensionAPI): void {
 
 	// Create runtime config store with callback that uses live session baseCwd
 	// for stale command detection (avoids reliance on process.cwd() which may be wrong)
-	const configStore = createRuntimeConfigStore(resolvePackageRoot(extensionEntryDir), resolveUserConfigDir(), () => discoverEntrypointCommandNames(state.baseCwd));
+	const configStore = createRuntimeConfigStore(packageRoot, resolveUserConfigDir(), () => discoverEntrypointCommandNames(state.baseCwd));
 
 	// Trigger initial load so gate state reflects the session cwd
 	configStore.reloadConfig();
@@ -403,7 +434,9 @@ Bounded role agents are not allowed to call subagents.`,
 
 	pi.registerTool(planReviewTool);
 	pi.registerTool(specReviewTool);
-	pi.registerTool(tool);
+	// Do not register Superagents' own `subagent` tool.
+	// This fork intentionally leaves the `subagent` tool name available for
+	// PI Sub-Agents so both extensions can be loaded together.
 	registerSlashCommands(
 		pi,
 		state,
@@ -510,6 +543,17 @@ Bounded role agents are not allowed to call subagents.`,
 
 	pi.on("session_start", (_event, ctx) => {
 		resetSessionState(ctx);
+		try {
+			const copiedAgents = ensureUserSuperpowersRoleAgents(packageRoot);
+			if (copiedAgents.length > 0 && ctx.hasUI) {
+				ctx.ui.notify(`Installed global Superpowers role agents for PI Sub-Agents: ${copiedAgents.join(", ")}`, "info");
+			}
+		} catch (error) {
+			if (ctx.hasUI) {
+				const reason = error instanceof Error ? error.message : String(error);
+				ctx.ui.notify(`Could not install global Superpowers role agents for PI Sub-Agents: ${reason}`, "warning");
+			}
+		}
 		if (state.configGate.message && ctx.hasUI && configDiagnosticNotifiedForSession !== state.currentSessionId) {
 			configDiagnosticNotifiedForSession = state.currentSessionId;
 			ctx.ui.notify(state.configGate.message, state.configGate.blocked ? "error" : "warning");

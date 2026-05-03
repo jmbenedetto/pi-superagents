@@ -147,7 +147,7 @@ function buildDelegationContract(useSubagents: boolean, useTestDrivenDevelopment
 			"This applies especially to implementation-plan execution, independent parallel investigations, bounded implementation, review, focused research, and debugging workflows.",
 			...(useTestDrivenDevelopment !== undefined
 				? [
-						`When delegating, pass \`useTestDrivenDevelopment: ${useTestDrivenDevelopment}\` in every \`subagent\` call so child agents inherit the active command profile explicitly.`,
+						`When delegating, do not pass Superagents-only parameters such as \`useTestDrivenDevelopment\`; this fork expects the external PI Sub-Agents \`subagent\` tool to handle delegation.`,
 					]
 				: []),
 			"Do not skip subagent delegation merely because you can do the work yourself.",
