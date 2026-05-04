@@ -42,7 +42,6 @@ function buildMetadata(input: SuperpowersRootPromptInput): string {
 	const lines: string[] = ['workflow: "superpowers"'];
 	if (input.useBranches !== undefined) lines.push(`useBranches: ${input.useBranches}`);
 	if (input.useSubagents !== undefined) lines.push(`useSubagents: ${input.useSubagents}`);
-	if (input.useTestDrivenDevelopment !== undefined) lines.push(`useTestDrivenDevelopment: ${input.useTestDrivenDevelopment}`);
 	if (input.usePlannotatorReview !== undefined) lines.push(`usePlannotatorReview: ${input.usePlannotatorReview}`);
 	if (input.worktrees !== undefined) lines.push(`worktrees.enabled: ${input.worktrees.enabled}`);
 	lines.push(`piSubagents.context: ${input.fork ? "fork" : "fresh"}`);
@@ -139,7 +138,7 @@ function buildBranchContract(useBranches: boolean): string {
  * @param useSubagents Whether subagent delegation is enabled.
  * @returns Prompt block for delegation policy.
  */
-function buildDelegationContract(useSubagents: boolean, useTestDrivenDevelopment?: boolean): string {
+function buildDelegationContract(useSubagents: boolean): string {
 	if (useSubagents) {
 		return [
 			"Subagent delegation is ENABLED by config.",
@@ -254,7 +253,7 @@ export function buildSuperpowersRootPrompt(input: SuperpowersRootPromptInput): s
 		sections.push("");
 	}
 	if (input.useSubagents !== undefined) {
-		sections.push(buildDelegationContract(input.useSubagents, input.useTestDrivenDevelopment));
+		sections.push(buildDelegationContract(input.useSubagents));
 		sections.push("");
 	}
 	if (input.worktrees !== undefined) {
@@ -287,7 +286,6 @@ export function buildSuperpowersVisiblePromptSummary(input: SuperpowersRootPromp
 	const configLines: string[] = [];
 	if (input.useBranches !== undefined) configLines.push(`useBranches: ${input.useBranches}`);
 	if (input.useSubagents !== undefined) configLines.push(`useSubagents: ${input.useSubagents}`);
-	if (input.useTestDrivenDevelopment !== undefined) configLines.push(`useTestDrivenDevelopment: ${input.useTestDrivenDevelopment}`);
 	if (input.usePlannotatorReview !== undefined) configLines.push(`usePlannotatorReview: ${input.usePlannotatorReview}`);
 	if (input.worktrees !== undefined) configLines.push(`worktrees.enabled: ${input.worktrees.enabled}`);
 	configLines.push(`context: ${input.fork ? "fork" : "fresh"}`);

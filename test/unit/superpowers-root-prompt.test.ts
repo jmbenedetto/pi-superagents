@@ -36,7 +36,7 @@ void describe("Superpowers root prompt", () => {
 		assert.match(prompt, /USING SUPERPOWERS BODY/);
 		assert.match(prompt, /useSubagents: true/);
 		assert.match(prompt, /useBranches: true/);
-		assert.match(prompt, /useTestDrivenDevelopment: true/);
+		assert.doesNotMatch(prompt, /useTestDrivenDevelopment: true/);
 		assert.match(prompt, /usePlannotatorReview: true/);
 		assert.match(prompt, /worktrees\.enabled: true/);
 		assert.match(prompt, /Subagent delegation is ENABLED/);
@@ -76,7 +76,7 @@ void describe("Superpowers root prompt", () => {
 
 		assert.match(prompt, /useSubagents: false/);
 		assert.match(prompt, /useBranches: false/);
-		assert.match(prompt, /useTestDrivenDevelopment: false/);
+		assert.doesNotMatch(prompt, /useTestDrivenDevelopment: false/);
 		assert.match(prompt, /usePlannotatorReview: false/);
 		assert.match(prompt, /worktrees\.enabled: false/);
 		assert.match(prompt, /Subagent delegation is DISABLED/);
@@ -235,7 +235,7 @@ void describe("Superpowers root prompt", () => {
 		assert.match(summary, /Config:/);
 		assert.match(summary, /useBranches: true/);
 		assert.match(summary, /useSubagents: false/);
-		assert.match(summary, /useTestDrivenDevelopment: true/);
+		assert.doesNotMatch(summary, /useTestDrivenDevelopment: true/);
 		assert.match(summary, /usePlannotatorReview: false/);
 		assert.match(summary, /worktrees\.enabled: false/);
 		assert.match(summary, /context: fork/);
