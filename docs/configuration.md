@@ -144,11 +144,9 @@ Superpowers role agents return their findings through Pi tool results. The runti
 
 Execution artifacts are still available when `artifacts` is enabled. Those files are written to the session artifact directory for debugging and truncation recovery, not to the repository root.
 
-## Compact Inline Subagent Results
+## Subagent Runtime Status
 
-Subagent tool results are rendered inline in the Pi conversation as compact, width-bounded lines. A collapsed view shows the subagent name, task, status, and live activity (e.g., current tool). Clicking or expanding the result reveals concise details: model, skills, recent tools, output preview, errors, and artifact paths. This keeps long-running Superpowers workflows readable without scrolling through verbose JSON or full Markdown output.
-
-The compact renderer is active for all `subagent` tool results when both `pi-superagents` and `pi-subagents` are installed. Use `subagent({ action: "status" })` (provided by Pi Subagents) to inspect active or recently completed runs.
+Pi Subagents owns the `subagent` tool, result rendering, and runtime status. When both packages are installed, use `subagent({ action: "status" })` to inspect active or recently completed runs. `pi-superagents` only contributes Superpowers commands, prompts, config, role-agent publishing, and optional Plannotator review tools.
 
 ## Common Override Examples
 
@@ -247,7 +245,7 @@ Superpowers agents use abstract model tiers. Define tiers in your configuration:
 
 You can edit model tier mappings during an active PI session with `/sp-settings`. The model picker reads PI's authenticated model registry and writes the selected `provider/model` value back to `config.json`. Successful tier edits apply to future Superpowers subagents immediately; already-running subagents keep the model they were launched with.
 
-`/sp-settings` also edits command-scoped workflow toggles. Use `c` to select a command, then toggle `p` for Plannotator, `s` for subagents, `t` for TDD, or `w` for worktrees on that selected command preset. This avoids writing Plannotator or TDD settings into unrelated command presets.
+`/sp-settings` also edits command-scoped workflow toggles. Use `c` to select a command, then toggle `p` for Plannotator, `s` for subagent delegation, `t` for TDD guidance in task text/skills, or `w` for worktrees on that selected command preset. This avoids writing Plannotator or TDD settings into unrelated command presets.
 
 ## Direct Skill Interception
 

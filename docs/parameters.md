@@ -14,9 +14,7 @@ These are the parameters the **LLM agent** passes when it calls the `subagent` t
 | `agent`           | string                                  | -                         | Name of the role agent (e.g., `sp-recon`, `sp-implementer`). Used for single-agent delegation. |
 | `task`            | string                                  | -                         | The specific task for the role agent to execute. |
 | `tasks`           | `TaskItem[]`                            | -                         | Array of tasks for parallel execution. Each item must specify `agent` and `task`. |
-| `workflow`        | `"superpowers"`                         | `"superpowers"`           | Explicitly marks the run as a Superpowers workflow. Only `superpowers` is supported. |
-| `useTestDrivenDevelopment` | boolean                        | explicit root prompt value; omitted direct tool calls default to `false` | Enables test-driven development guidance for `sp-implementer` tasks. Root Superpowers prompts instruct agents to pass the resolved command value explicitly. |
-| `context`         | `"fresh" \| "fork"` | `"fresh"` (bounded roles) | Pi Subagents context mode. `fresh` links to parent session tree without inheriting conversation turns; `fork` inherits full parent history. **Do not use Superagents `sessionMode` parameter** when calling Pi Subagents. |
+| `context`         | `"fresh" \| "fork"` | `"fresh"` (bounded roles) | Pi Subagents context mode. `fresh` starts a fresh child context; `fork` inherits parent context according to Pi Subagents semantics. **Do not use Superagents `sessionMode` parameter** when calling Pi Subagents. |
 | `cwd`             | string                                  | parent cwd                | Working directory for the subagent. |
 | `skill`           | `string \| string[] \| false`           | agent default             | Skills to inject into the agent prompt. `false` disables all skills. |
 | `model`           | string                                  | agent default             | Override the model for this specific run. Can be a concrete ID or a tier name (`cheap`, `balanced`, `max`). |
@@ -25,9 +23,9 @@ These are the parameters the **LLM agent** passes when it calls the `subagent` t
 
 Resolved skills, including per-call `skill` overrides and agent frontmatter defaults, can be inspected via `subagent({ action: "status" })` when Pi Subagents is installed. Missing skills are shown as warnings there. The bundled `sp-debug` role resolves `systematic-debugging` from its frontmatter unless a call overrides or disables skills.
 
-Provide either `agent` plus `task` for a single delegation, or `tasks` for parallel delegation. The runtime validates this selector after Pi accepts the tool call; the machine-readable schema stays intentionally simple for host compatibility.
+Provide either `agent` plus `task` for a single delegation, or `tasks` for parallel delegation. Do not pass Superagents-only parameters such as `workflow`, `sessionMode`, or `useTestDrivenDevelopment` to Pi Subagents. When TDD is required, include the requirement in the child task text or pass `skill: "test-driven-development"`.
 
-Subagent output is inline: the child Pi process streams assistant text back through the `subagent` tool result. The tool does not accept an output-file parameter and does not instruct Superpowers roles to write repo-root report files.
+Subagent output is inline: the child Pi process streams assistant text back through the `subagent` tool result. The tool does not instruct Superpowers roles to write repo-root report files.
 
 > **Note:** The `subagent` tool does not accept ad-hoc extension paths at call time. Extension loading for child Pi processes is controlled through `superagents.extensions` in the global config and the `extensions` field in agent frontmatter (additive to the global list). Implicit Pi extension discovery is disabled by default; only configured extensions are loaded for subagents. Configured entries may be local paths or normal Pi `-e` source specs such as `npm:@scope/package`, `git:github.com/user/repo`, `https://...`, or `ssh://...`. Missing local paths return a clear error and do not spawn the child Pi process; package and remote specs are resolved by child Pi.
 
@@ -81,12 +79,7 @@ These tools are registered for root Superpowers workflows and are used by the pr
 
 ## Result Rendering
 
-Subagent tool results are rendered inline in the Pi conversation. The renderer produces compact, width-bounded text lines:
-
-- **Collapsed**: status line, task name, current tool activity, and timing stats.
-- **Expanded**: model, skills, recent tools, bounded output preview, errors, session file, and artifact paths.
-
-This applies to both single and parallel subagent executions. When Pi Subagents is installed, use `subagent({ action: "status" })` to inspect active and recent runs.
+Subagent tool results are owned and rendered by Pi Subagents. This applies to both single and parallel subagent executions. Use `subagent({ action: "status" })` to inspect active and recent runs.
 
 ## Release Notes
 

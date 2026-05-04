@@ -7,7 +7,6 @@
 - **Superpowers Workflow**: Proven pipeline for robust AI-assisted development.
 - **Role-Specific Agents**: Thin agents-layer for every phase of the development lifecycle.
 - **Model Tiers & Command Settings**: Abstract model selection (cheap, balanced, max) for each agent. One model can be configured per tier. Custom tiers are possible. Models and command-scoped behavior toggles can be changed through the `/sp-settings` TUI; slash-command metadata lives in entrypoint agent frontmatter.
-- **Compact Inline Subagent Results**: Subagent tool results render as collapsed single-line summaries with an expandable details view, keeping the Pi conversation readable during multi-step Superpowers workflows.
 - **Fresh Context Sessions**: Bounded Superpowers roles default to `context: "fresh"` via Pi Subagents. Child sessions stay linked to the parent for session tree visibility, but do not inherit parent conversation turns.
 - **Packet Handoffs**: Work briefs are delivered through runtime-managed packet artifacts in the session artifact directory, automatically cleaned up after the child exits.
 - **Inline Agent Handoffs**: Role outputs are returned through Pi tool results and session artefacts.
@@ -85,13 +84,13 @@ Subagent-driven development keeps implementer and reviewer reports inline in the
 
 - **[Configuration](docs/configuration.md)** — Workflow, settings, model tiers, custom tiers, commands, and agent overrides.
 - **[Worktree Isolation](docs/worktrees.md)** — Git worktree setup.
-- **[Parameters API](docs/parameters.md)** — Full parameter reference for the `subagent` tool.
+- **[Parameters API](docs/parameters.md)** — Superpowers guidance for calling the Pi Subagents `subagent` tool.
 - **[Skills Reference](docs/skills.md)** — Skill locations, injection, and frontmatter.
 - **[Release Process](docs/releases.md)** — Maintainer steps for GitHub Releases and npm Trusted Publishing.
 
 ## Credits
 
 - This was originally a fork of [pi-subagents](https://github.com/nicobailon/pi-subagents), so thanks for all the ground-work. This repo however moved far off the original.
-- [pi-interactive-subagents](https://github.com/hazat/pi-interactive-subagents) for the session-mode implementation.
+- [pi-interactive-subagents](https://github.com/hazat/pi-interactive-subagents) for early session-isolation inspiration.
 - [@tintinweb/pi-subagents](https://github.com/tintinweb/pi-subagents) for UI inspiration.
 - And of course [Pi](https://pi.dev) for the awesome foundation.
