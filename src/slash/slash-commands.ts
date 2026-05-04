@@ -15,7 +15,6 @@
  * - `superpowers/skill-entry` for skill-entry prompt building
  * - `shared/types` for `ExtensionConfig`, `SubagentState`
  * - `shared/skills` for `resolveAvailableSkill` and `resolveSkills`
- * - `ui/subagents-status` for the run status overlay
  * - `ui/sp-settings` for the settings overlay
  */
 
@@ -55,7 +54,6 @@ import { buildSuperpowersVisiblePromptSummary } from "../superpowers/root-prompt
 import { buildResolvedSkillEntryPrompt } from "../superpowers/skill-entry.ts";
 import { parseSuperpowersWorkflowArgs, type ResolvedSuperpowersRunProfile, resolveSuperpowersRunProfile } from "../superpowers/workflow-profile.ts";
 import { SuperpowersSettingsComponent } from "../ui/sp-settings.ts";
-import { SubagentsStatusComponent } from "../ui/subagents-status.ts";
 
 /**
  * Notify the user when config errors disable execution.
@@ -104,18 +102,6 @@ function sendSkillEntryPrompt(dispatcher: ReturnType<typeof createSuperpowersPro
 		ctx,
 	);
 	if (!wasIdle && ctx.hasUI) ctx.ui.notify("Queued Superpowers skill-entry workflow as a follow-up", "info");
-}
-
-/**
- * Open the Subagents status overlay when UI is available.
- *
- * @param ctx Current extension command or shortcut context.
- */
-async function openSubagentsStatusOverlay(ctx: ExtensionContext): Promise<void> {
-	if (!ctx.hasUI) return;
-	await ctx.ui.custom<void>((tui, theme, _kb, done) => {
-		return new SubagentsStatusComponent(tui, theme, () => done(undefined));
-	});
 }
 
 /**
@@ -207,9 +193,7 @@ function registerSuperpowersCommand(
  *
  * Registers:
  * - Superpowers entrypoint commands from discovered interactive entrypoint agent files
- * - `/subagents-status` — subagent run status overlay
  * - `/sp-settings` — Superpowers and subagent workflow settings overlay
- * - `Ctrl+Alt+S` — keyboard shortcut for subagents status
  *
  * Custom commands require entrypoint agent markdown files (not config-only definitions).
  *
@@ -228,20 +212,6 @@ export function registerSlashCommands(pi: ExtensionAPI, state: SubagentState, co
 	for (const entrypointAgent of entrypointAgents) {
 		registerSuperpowersCommand(pi, dispatcher, state, configSource, entrypointAgent);
 	}
-
-	pi.registerCommand("subagents-status", {
-		description: "Show active and recent subagent run status",
-		handler: async (_args, ctx) => {
-			await openSubagentsStatusOverlay(ctx);
-		},
-	});
-
-	pi.registerShortcut("ctrl+alt+s", {
-		description: "Open subagents status",
-		handler: async (ctx) => {
-			await openSubagentsStatusOverlay(ctx);
-		},
-	});
 
 	pi.registerCommand("sp-settings", {
 		description: "Show Superpowers and subagent workflow settings",

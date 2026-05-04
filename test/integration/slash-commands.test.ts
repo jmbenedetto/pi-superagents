@@ -5,7 +5,8 @@
  * - verify only Superpowers commands and configured custom commands are registered
  * - verify /sp-implement sends a root-session prompt with resolved defaults
  * - verify custom commands apply presets and inline tokens override them
- * - verify /subagents-status, ctrl+alt+s, and /sp-settings open their respective overlays
+ * - verify /sp-settings opens its overlay
+ * - verify /subagents-status and ctrl+alt+s are NOT registered (pi-subagents owns them)
  * - verify config-gated refusal blocks execution
  * - verify /sp-brainstorm sends a skill-entry prompt for brainstorming flows
  * - verify /sp-plan sends a skill-entry prompt for planning flows
@@ -245,17 +246,17 @@ void describe("lean superpowers slash commands", { skip: !available ? "slash-com
 		assert.ok(commands.has("sp-implement"), "expected /sp-implement to be registered");
 		assert.ok(commands.has("sp-brainstorm"), "expected /sp-brainstorm to be registered");
 		assert.ok(commands.has("sp-plan"), "expected /sp-plan to be registered");
-		assert.ok(commands.has("subagents-status"), "expected /subagents-status to be registered");
 		assert.ok(commands.has("sp-settings"), "expected /sp-settings to be registered");
 		assert.ok(!commands.has("sp-review"), "expected config-only /sp-review to NOT be registered");
-		assert.ok(shortcuts.has("ctrl+alt+s"), "expected ctrl+alt+s shortcut to be registered");
+		// pi-superagents must not own stale subagent status UI - pi-subagents owns it
+		assert.equal(commands.has("subagents-status"), false, "pi-superagents must not own stale subagent status UI");
+		assert.equal(shortcuts.has("ctrl+alt+s"), false, "pi-superagents must not bind status shortcut for old run history");
 		assert.ok(!commands.has("superpowers"), "expected /superpowers to NOT be registered");
 		assert.ok(!commands.has("superpowers-status"), "expected /superpowers-status to NOT be registered");
 		assert.ok(!commands.has("run"), "expected /run to NOT be registered");
 		assert.ok(!commands.has("chain"), "expected /chain to NOT be registered");
 		assert.ok(!commands.has("parallel"), "expected /parallel to NOT be registered");
 		assert.ok(!commands.has("agents"), "expected /agents to NOT be registered");
-		assert.match(shortcuts.get("ctrl+alt+s")!.description ?? "", /subagents status/i);
 		// pi-superagents must not register the subagent tool - that's owned by pi-subagents
 		assert.ok(!tools.has("subagent"), "expected subagent tool to NOT be registered by pi-superagents");
 	});
@@ -376,7 +377,7 @@ void describe("lean superpowers slash commands", { skip: !available ? "slash-com
 		const prompt = String(userMessages[0].content);
 		assert.match(prompt, /workflow:\s*"superpowers"/);
 		assert.match(prompt, /useSubagents:\s*true/);
-		assert.match(prompt, /useTestDrivenDevelopment:\s*true/);
+		assert.match(prompt, /piSubagents\.context:\s*fresh/);
 		assert.match(prompt, /worktrees\.enabled:\s*false/);
 		assert.match(prompt, /implement auth fix/);
 		assert.match(prompt, /Required bootstrap skill/);
@@ -498,13 +499,13 @@ void describe("lean superpowers slash commands", { skip: !available ? "slash-com
 
 		registerSlashCommands!(pi, createState(cwd), config);
 
-		// /sp-review inherits the preset so useSubagents: false, useTestDrivenDevelopment: false
+		// /sp-review inherits the preset so useSubagents: false
 		await commands.get("sp-review")!.handler("check auth module for bugs", createCommandContext({ cwd }));
 		assert.equal(userMessages.length, 1);
 		const prompt = String(userMessages[0].content);
 		assert.match(prompt, /useSubagents:\s*false/);
-		assert.match(prompt, /useTestDrivenDevelopment:\s*false/);
 		assert.match(prompt, /worktrees\.enabled:\s*false/);
+		assert.match(prompt, /piSubagents\.context:\s*fresh/);
 		assert.match(prompt, /Do not use the `using-git-worktrees` skill/);
 
 		// Inline override: /sp-review subagents check auth module -> useSubagents: true
@@ -515,46 +516,7 @@ void describe("lean superpowers slash commands", { skip: !available ? "slash-com
 		assert.match(overridePrompt, /useSubagents:\s*true/);
 	});
 
-	void it("/subagents-status opens the run status overlay", async () => {
-		const { commands, pi } = createPiHarness();
-		let customCalls = 0;
-		let customComponent: unknown;
-		registerSlashCommands!(pi, createState(process.cwd()), createEffectiveConfig());
-		await commands.get("subagents-status")!.handler(
-			"",
-			createCommandContext({
-				hasUI: true,
-				custom: async (callback) => {
-					customCalls++;
-					customComponent = (callback as (...args: unknown[]) => unknown)(
-						{ requestRender: () => {} },
-						{ fg: (_color: string, text: string) => text, bg: (_color: string, text: string) => text },
-						undefined,
-						() => {},
-					);
-					return customComponent;
-				},
-			}),
-		);
-		assert.equal(customCalls, 1);
-		assert.equal(typeof (customComponent as { render?: unknown }).render, "function");
-	});
 
-	void it("ctrl+alt+s opens the run status overlay", async () => {
-		const { shortcuts, pi } = createPiHarness();
-		let customCalls = 0;
-		registerSlashCommands!(pi, createState(process.cwd()), createEffectiveConfig());
-		await shortcuts.get("ctrl+alt+s")!.handler(
-			createCommandContext({
-				hasUI: true,
-				custom: async () => {
-					customCalls++;
-					return undefined;
-				},
-			}),
-		);
-		assert.equal(customCalls, 1);
-	});
 
 	void it("/sp-settings opens the settings overlay", async () => {
 		const { commands, pi } = createPiHarness();
@@ -607,19 +569,7 @@ void describe("lean superpowers slash commands", { skip: !available ? "slash-com
 		assert.equal(doneCalls, 0);
 	});
 
-	void it("/subagents-status returns cleanly when UI is unavailable", async () => {
-		const { commands, pi } = createPiHarness();
-		registerSlashCommands!(pi, createState(process.cwd()), createEffectiveConfig());
 
-		await assert.doesNotReject(async () => {
-			await commands.get("subagents-status")!.handler("", {
-				cwd: process.cwd(),
-				isIdle: () => true,
-				hasUI: false,
-				modelRegistry: { getAvailable: () => [] },
-			} as never);
-		});
-	});
 
 	void it("/sp-settings returns cleanly when UI is unavailable", async () => {
 		const { commands, pi } = createPiHarness();
@@ -691,7 +641,7 @@ void describe("lean superpowers slash commands", { skip: !available ? "slash-com
 
 		assert.equal(userMessages.length, 1);
 		assert.equal(userMessages[0].options?.deliverAs, "followUp");
-		assert.match(String(userMessages[0].content), /useTestDrivenDevelopment:\s*false/);
+		assert.match(String(userMessages[0].content), /piSubagents\.context:\s*fresh/);
 	});
 
 	void it("shows usage hint when /sp-implement is called without a task", async () => {
@@ -749,34 +699,7 @@ void describe("lean superpowers slash commands", { skip: !available ? "slash-com
 		});
 	});
 
-	void it("SubagentsStatusComponent renders active and recent runs", async () => {
-		const module = (await import("../../src/ui/subagents-status.ts")) as {
-			SubagentsStatusComponent: new (...args: unknown[]) => { render(width: number): string[]; dispose(): void };
-		};
-		const component = new module.SubagentsStatusComponent(
-			{ requestRender: () => {} },
-			{ fg: (_color: string, text: string) => text, bg: (_color: string, text: string) => text },
-			() => {},
-			{
-				refreshMs: 60_000,
-				getActiveRuns: () => [
-					{
-						agent: "sp-implementer",
-						task: "Fix auth bug",
-						ts: 1,
-						status: "ok",
-						duration: 1250,
-						model: "test",
-						tokens: { total: 300 },
-					},
-				],
-				getRecentRuns: () => [],
-			},
-		);
-		const rendered = component.render(84).join("\n");
-		assert.match(rendered, /Fix auth bug/);
-		component.dispose();
-	});
+
 
 	void it("writes Superpowers setting toggles to the config file", async () => {
 		const fs = await import("node:fs");
@@ -929,8 +852,8 @@ void describe("lean superpowers slash commands", { skip: !available ? "slash-com
 
 		const prompt = String(userMessages[0].content);
 		assert.match(prompt, /useSubagents:\s*false/);
-		assert.match(prompt, /useTestDrivenDevelopment:\s*false/);
 		assert.match(prompt, /worktrees\.enabled:\s*false/);
+		assert.match(prompt, /piSubagents\.context:\s*fresh/);
 		assert.doesNotMatch(prompt, /Overlay skills:/);
 	});
 
