@@ -16,7 +16,7 @@ import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import test from "node:test";
-import { normalizeSuperpowersAgentForPiSubagents, publishSuperpowersRoleAgents } from "../../src/agents/pi-subagents-publisher.ts";
+import { normalizeSuperpowersAgentForPiSubagents, publishSuperpowersRoleAgents, MANAGED_AGENT_MARKER } from "../../src/agents/pi-subagents-publisher.ts";
 
 void test("normalizes session-mode into Pi Subagents defaultContext", () => {
 	const source = `---
@@ -41,7 +41,7 @@ You are recon.`;
 	assert.match(output, /systemPromptMode: replace/);
 	assert.match(output, /inheritProjectContext: false/);
 	assert.match(output, /inheritSkills: false/);
-	assert.match(output, /managed-by: pi-superagents/);
+	assert.match(output, new RegExp(MANAGED_AGENT_MARKER));
 	assert.doesNotMatch(output, /session-mode:/);
 });
 
@@ -153,7 +153,7 @@ Body.`;
 	assert.match(output, /systemPromptMode: replace/);
 	assert.match(output, /inheritProjectContext: false/);
 	assert.match(output, /inheritSkills: false/);
-	assert.match(output, /managed-by: pi-superagents/);
+	assert.match(output, new RegExp(MANAGED_AGENT_MARKER));
 	assert.doesNotMatch(output, /defaultContext:/);
 });
 
@@ -202,7 +202,7 @@ Test body.`,
 
 		assert.deepEqual(changed, ["sp-test.md"]);
 		const written = fs.readFileSync(path.join(tmpDir, "sp-test.md"), "utf-8");
-		assert.match(written, /managed-by: pi-superagents/);
+		assert.match(written, new RegExp(MANAGED_AGENT_MARKER));
 		assert.match(written, /model: openai-codex\/gpt-5\.4-mini/);
 	} finally {
 		fs.rmSync(tmpDir, { recursive: true, force: true });
@@ -241,7 +241,7 @@ Bundled body.`,
 		assert.deepEqual(changed, []);
 		const preserved = fs.readFileSync(path.join(tmpDir, "sp-test.md"), "utf-8");
 		assert.equal(preserved, existingContent);
-		assert.doesNotMatch(preserved, /managed-by/);
+		assert.doesNotMatch(preserved, new RegExp(MANAGED_AGENT_MARKER));
 	} finally {
 		fs.rmSync(tmpDir, { recursive: true, force: true });
 	}
@@ -312,8 +312,8 @@ Updated body.`,
 
 		const updated = fs.readFileSync(path.join(tmpDir, "sp-test.md"), "utf-8");
 		assert.match(updated, /description: Test updated/);
-		assert.match(updated, /Updated body\./);
-		assert.match(updated, /managed-by: pi-superagents/);
+		assert.match(updated, /Updated body\./); 
+		assert.match(updated, new RegExp(MANAGED_AGENT_MARKER));
 	} finally {
 		fs.rmSync(tmpDir, { recursive: true, force: true });
 	}
@@ -404,4 +404,111 @@ Body.`,
 	} finally {
 		fs.rmSync(tmpParent, { recursive: true, force: true });
 	}
+});
+
+void test("path traversal: array-based caller cannot write outside userAgentsDir using basename", () => {
+	const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "pi-subagents-test-"));
+	const tmpParent = path.dirname(tmpDir);
+	try {
+		const sourceAgents = [
+			{
+				name: "../../../etc/sp-malicious.md",
+				content: `---
+name: sp-malicious
+description: Path traversal attempt
+model: cheap
+---
+
+Malicious body.`,
+			},
+		];
+
+		const config = { modelTiers: { cheap: "openai-codex/gpt-5.4-mini" } };
+		const changed = publishSuperpowersRoleAgents(sourceAgents, tmpDir, config);
+
+		// Should write using basename only
+		assert.deepEqual(changed, ["sp-malicious.md"]);
+		assert.ok(fs.existsSync(path.join(tmpDir, "sp-malicious.md")));
+		// Should NOT write outside tmpDir
+		assert.ok(!fs.existsSync(path.join(tmpParent, "etc", "sp-malicious.md")));
+		assert.ok(!fs.existsSync(path.join(tmpParent, "sp-malicious.md")));
+	} finally {
+		fs.rmSync(tmpDir, { recursive: true, force: true });
+	}
+});
+
+void test("managed detection: body containing marker but frontmatter without is not overwritten", () => {
+	const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "pi-subagents-test-"));
+	try {
+		// Pre-create a file with marker in body but not in frontmatter
+		const existingContent = `---
+name: sp-test
+description: User's custom agent
+model: custom-model
+---
+
+This agent mentions ${MANAGED_AGENT_MARKER} in the body but is not actually managed.`;
+		fs.writeFileSync(path.join(tmpDir, "sp-test.md"), existingContent, "utf-8");
+
+		const sourceAgents = [
+			{
+				name: "sp-test.md",
+				content: `---
+name: sp-test
+description: Bundled agent
+model: cheap
+---
+
+Bundled body.`,
+			},
+		];
+
+		const config = { modelTiers: { cheap: "openai-codex/gpt-5.4-mini" } };
+		const changed = publishSuperpowersRoleAgents(sourceAgents, tmpDir, config);
+
+		// Should not overwrite
+		assert.deepEqual(changed, []);
+		const preserved = fs.readFileSync(path.join(tmpDir, "sp-test.md"), "utf-8");
+		assert.equal(preserved, existingContent);
+		assert.match(preserved, /User's custom agent/);
+	} finally {
+		fs.rmSync(tmpDir, { recursive: true, force: true });
+	}
+});
+
+void test("thinking override: original frontmatter thinking is overridden when model tier supplies thinking", () => {
+	const source = `---
+name: sp-test
+description: Test agent
+model: cheap
+thinking: high
+---
+
+Test body.`;
+
+	const output = normalizeSuperpowersAgentForPiSubagents(source, {
+		modelTiers: { cheap: { model: "openai-codex/gpt-5.4-mini", thinking: "minimal" } },
+	});
+
+	// Should override to minimal from tier config
+	assert.match(output, /thinking: minimal/);
+	assert.doesNotMatch(output, /thinking: high/);
+});
+
+void test("thinking override: thinking is removed when model tier does not supply thinking", () => {
+	const source = `---
+name: sp-test
+description: Test agent
+model: cheap
+thinking: high
+---
+
+Test body.`;
+
+	const output = normalizeSuperpowersAgentForPiSubagents(source, {
+		modelTiers: { cheap: "openai-codex/gpt-5.4-mini" },
+	});
+
+	// Should not have thinking field when tier is string-only
+	assert.doesNotMatch(output, /thinking:/);
 });

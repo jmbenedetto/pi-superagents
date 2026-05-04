@@ -14,21 +14,19 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { parseFrontmatter } from "./frontmatter.ts";
+import type { ModelTierSetting } from "../shared/types.ts";
 
 /**
- * Model tier configuration from config.json superagents.modelTiers.
+ * Marker constant for managed agent files.
  */
-export interface ModelTierConfig {
-	model: string;
-	thinking?: string;
-}
+export const MANAGED_AGENT_MARKER = "managed-by: pi-superagents";
 
 /**
  * Configuration for agent normalization.
  */
 export interface NormalizationConfig {
 	/** Model tier mappings from config.json superagents.modelTiers */
-	modelTiers: Record<string, string | ModelTierConfig>;
+	modelTiers: Record<string, ModelTierSetting>;
 }
 
 /**
@@ -53,9 +51,9 @@ export function normalizeSuperpowersAgentForPiSubagents(content: string, config:
 	// Build normalized frontmatter
 	const normalized: Record<string, string> = {};
 
-	// Copy all fields except session-mode (will be converted)
+	// Copy all fields except session-mode (will be converted) and thinking (will be set by tier if needed)
 	for (const [key, value] of Object.entries(frontmatter)) {
-		if (key !== "session-mode") {
+		if (key !== "session-mode" && key !== "thinking") {
 			normalized[key] = value;
 		}
 	}
@@ -93,7 +91,8 @@ export function normalizeSuperpowersAgentForPiSubagents(content: string, config:
 	normalized.inheritSkills = "false";
 
 	// Add managed-by marker
-	normalized["managed-by"] = "pi-superagents";
+	const [markerKey, markerValue] = MANAGED_AGENT_MARKER.split(": ");
+	normalized[markerKey] = markerValue;
 
 	// Reconstruct frontmatter
 	let output = "---\n";
@@ -200,17 +199,21 @@ export function publishSuperpowersRoleAgents(
 	// Process each source agent
 	for (const { name, content } of sourceAgents) {
 		const normalized = normalizeSuperpowersAgentForPiSubagents(content, config);
-		const destPath = path.join(userAgentsDir, name);
+		// Use basename to prevent path traversal
+		const safeName = path.basename(name);
+		const destPath = path.join(userAgentsDir, safeName);
 
 		// Check if file exists
 		if (!fs.existsSync(destPath)) {
 			// File doesn't exist, write it
 			fs.writeFileSync(destPath, normalized, "utf-8");
-			changedFiles.push(name);
+			changedFiles.push(safeName);
 		} else {
-			// File exists, check if managed
+			// File exists, check if managed by parsing frontmatter
 			const existing = fs.readFileSync(destPath, "utf-8");
-			const isManaged = existing.includes("managed-by: pi-superagents");
+			const { frontmatter: existingFrontmatter } = parseFrontmatter(existing);
+			const [markerKey, markerValue] = MANAGED_AGENT_MARKER.split(": ");
+			const isManaged = existingFrontmatter[markerKey] === markerValue;
 
 			if (!isManaged) {
 				// Not managed, skip
@@ -221,7 +224,7 @@ export function publishSuperpowersRoleAgents(
 			if (existing !== normalized) {
 				// Content differs, update
 				fs.writeFileSync(destPath, normalized, "utf-8");
-				changedFiles.push(name);
+				changedFiles.push(safeName);
 			}
 			// else: content same, skip
 		}
