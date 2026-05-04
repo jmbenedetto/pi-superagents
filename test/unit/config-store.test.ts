@@ -197,7 +197,7 @@ void describe("loadRuntimeConfigState", () => {
 		});
 		const userDir = path.join(os.homedir(), ".pi", "agent", "extensions", "pi-superagents");
 		const state = loadRuntimeConfigState(packageDir, userDir);
-		
+
 		assert.equal(state.configPath, path.join(userDir, "config.json"));
 		assert.ok(state.configPath.includes("pi-superagents"));
 		assert.ok(!state.configPath.includes("/subagent/"));
@@ -222,7 +222,7 @@ void describe("loadRuntimeConfigState", () => {
 		);
 
 		const state = loadRuntimeConfigState(packageDir, userDir);
-		
+
 		assert.equal(state.blocked, false);
 		assert.equal(state.configPath, path.join(userDir, "config.json"));
 		const cheapTier = state.config.superagents?.modelTiers?.cheap;
@@ -252,7 +252,7 @@ void describe("loadRuntimeConfigState", () => {
 		);
 
 		const state = loadRuntimeConfigState(packageDir, userDir);
-		
+
 		assert.equal(state.blocked, false, "Config should not be blocked by pi-subagents keys");
 		assert.ok(
 			!state.diagnostics.some((d) => d.path === "asyncByDefault" || d.path === "intercomBridge" || d.path === "maxSubagentDepth"),
@@ -304,7 +304,7 @@ void describe("loadRuntimeConfigState", () => {
 		const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "pi-config-both-test-"));
 		const userDir = path.join(tempRoot, "pi-superagents");
 		const legacyDir = path.join(tempRoot, "subagent");
-		
+
 		// Create legacy config
 		fs.mkdirSync(legacyDir, { recursive: true });
 		fs.writeFileSync(
@@ -316,7 +316,7 @@ void describe("loadRuntimeConfigState", () => {
 			}),
 			"utf-8",
 		);
-		
+
 		// Create new config
 		fs.mkdirSync(userDir, { recursive: true });
 		fs.writeFileSync(
@@ -330,7 +330,7 @@ void describe("loadRuntimeConfigState", () => {
 		);
 
 		const state = loadRuntimeConfigState(packageDir, userDir);
-		
+
 		assert.equal(state.blocked, false);
 		const cheapTier = state.config.superagents?.modelTiers?.cheap;
 		const model = typeof cheapTier === "object" ? cheapTier.model : cheapTier;

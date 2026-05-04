@@ -379,7 +379,6 @@ void describe("single sync execution", { skip: !available ? "pi packages not ava
 		assert.deepEqual(result.skills, ["override-skill"]);
 	});
 
-
 	void it("disables agent default skills when runtime skills are explicitly false", async () => {
 		mockPi.onCall({ output: "Done" });
 		writeSkill(tempDir, "default-skill");

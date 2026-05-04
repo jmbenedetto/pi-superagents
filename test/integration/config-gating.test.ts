@@ -143,7 +143,7 @@ void describe("extension config gating", { skip: !available ? "extension not imp
 		const home = fs.mkdtempSync(path.join(os.tmpdir(), "pi-config-gate-home-"));
 		tempDirs.push(home);
 		setTestHome(home);
-		const extensionDir = path.join(home, ".pi", "agent", "extensions", "subagent");
+		const extensionDir = path.join(home, ".pi", "agent", "extensions", "pi-superagents");
 		fs.mkdirSync(extensionDir, { recursive: true });
 		fs.writeFileSync(path.join(extensionDir, "config.json"), JSON.stringify({ asyncByDefalt: true }), "utf-8");
 
@@ -173,7 +173,7 @@ void describe("extension config gating", { skip: !available ? "extension not imp
 		const home = fs.mkdtempSync(path.join(os.tmpdir(), "pi-config-fieldname-home-"));
 		tempDirs.push(home);
 		setTestHome(home);
-		const extensionDir = path.join(home, ".pi", "agent", "extensions", "subagent");
+		const extensionDir = path.join(home, ".pi", "agent", "extensions", "pi-superagents");
 		fs.mkdirSync(extensionDir, { recursive: true });
 		fs.writeFileSync(path.join(extensionDir, "config.json"), JSON.stringify({ maxSubagentDepth: -1 }), "utf-8");
 
@@ -197,7 +197,7 @@ void describe("extension config gating", { skip: !available ? "extension not imp
 		const home = fs.mkdtempSync(path.join(os.tmpdir(), "pi-config-dedup-home-"));
 		tempDirs.push(home);
 		setTestHome(home);
-		const extensionDir = path.join(home, ".pi", "agent", "extensions", "subagent");
+		const extensionDir = path.join(home, ".pi", "agent", "extensions", "pi-superagents");
 		fs.mkdirSync(extensionDir, { recursive: true });
 		fs.writeFileSync(path.join(extensionDir, "config.json"), JSON.stringify({ asyncByDefalt: true }), "utf-8");
 

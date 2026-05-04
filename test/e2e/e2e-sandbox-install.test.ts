@@ -16,7 +16,7 @@ import { tryImport } from "../support/helpers.ts";
 const harness = await tryImport<any>("@marcfargas/pi-test-harness");
 const available = !!harness;
 const PACKAGE_DIR = path.resolve(".");
-const EXPECTED_TOOLS = ["subagent", "superpowers_plan_review", "superpowers_spec_review"];
+const EXPECTED_TOOLS = ["superpowers_plan_review", "superpowers_spec_review"];
 
 interface PackageManifest {
 	pi?: {

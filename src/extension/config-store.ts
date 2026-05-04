@@ -143,7 +143,7 @@ export function loadRuntimeConfigState(packageConfigDir: string, userConfigDir =
 
 	try {
 		const bundledDefaults = (readJsonConfig(bundledDefaultConfigPath) ?? {}) as ExtensionConfig;
-		
+
 		// Read user config from new path, fall back to legacy path if new path is absent
 		let userConfig = readJsonConfig(userConfigPath);
 		if (userConfig === undefined) {
@@ -155,7 +155,7 @@ export function loadRuntimeConfigState(packageConfigDir: string, userConfigDir =
 				userConfig = extractSuperagentsConfig(legacyConfig);
 			}
 		}
-		
+
 		const result = loadEffectiveConfig(bundledDefaults, userConfig, { entrypointCommands });
 		const message = result.diagnostics.length ? formatConfigDiagnostics(result.diagnostics, { configPath: userConfigPath, examplePath: exampleConfigPath }) : "";
 

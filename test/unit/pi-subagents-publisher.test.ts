@@ -16,7 +16,7 @@ import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import test from "node:test";
-import { normalizeSuperpowersAgentForPiSubagents, publishSuperpowersRoleAgents, MANAGED_AGENT_MARKER } from "../../src/agents/pi-subagents-publisher.ts";
+import { MANAGED_AGENT_MARKER, normalizeSuperpowersAgentForPiSubagents, publishSuperpowersRoleAgents } from "../../src/agents/pi-subagents-publisher.ts";
 
 void test("normalizes session-mode into Pi Subagents defaultContext", () => {
 	const source = `---
@@ -312,7 +312,7 @@ Updated body.`,
 
 		const updated = fs.readFileSync(path.join(tmpDir, "sp-test.md"), "utf-8");
 		assert.match(updated, /description: Test updated/);
-		assert.match(updated, /Updated body\./); 
+		assert.match(updated, /Updated body\./);
 		assert.match(updated, new RegExp(MANAGED_AGENT_MARKER));
 	} finally {
 		fs.rmSync(tmpDir, { recursive: true, force: true });

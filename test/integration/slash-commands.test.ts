@@ -516,8 +516,6 @@ void describe("lean superpowers slash commands", { skip: !available ? "slash-com
 		assert.match(overridePrompt, /useSubagents:\s*true/);
 	});
 
-
-
 	void it("/sp-settings opens the settings overlay", async () => {
 		const { commands, pi } = createPiHarness();
 		let customCalls = 0;
@@ -568,8 +566,6 @@ void describe("lean superpowers slash commands", { skip: !available ? "slash-com
 
 		assert.equal(doneCalls, 0);
 	});
-
-
 
 	void it("/sp-settings returns cleanly when UI is unavailable", async () => {
 		const { commands, pi } = createPiHarness();
@@ -698,8 +694,6 @@ void describe("lean superpowers slash commands", { skip: !available ? "slash-com
 			} as never);
 		});
 	});
-
-
 
 	void it("writes Superpowers setting toggles to the config file", async () => {
 		const fs = await import("node:fs");

@@ -49,11 +49,11 @@ void describe("Superpowers root prompt", () => {
 		assert.match(prompt, /If the tool returns unavailable, show one concise warning/);
 		assert.doesNotMatch(prompt, /exactly once/);
 		assert.match(prompt, /must use the `subagent` tool/);
-		assert.match(prompt, /Pi Subagents uses `context: \"fresh\" \| \"fork\"`/);
+		assert.match(prompt, /Pi Subagents uses `context: "fresh" \| "fork"`/);
 		assert.match(prompt, /it does not support Superagents `sessionMode` or `useTestDrivenDevelopment` parameters/);
-		assert.match(prompt, /pass `context: \"fresh\"` unless the user explicitly requested forked context/);
+		assert.match(prompt, /pass `context: "fresh"` unless the user explicitly requested forked context/);
 		assert.match(prompt, /When TDD is required, include the TDD requirement in the child task text/);
-		assert.match(prompt, /pass `skill: \"test-driven-development\"` when that role should receive the skill/);
+		assert.match(prompt, /pass `skill: "test-driven-development"` when that role should receive the skill/);
 		assert.doesNotMatch(prompt, /do not pass Superagents-only parameters such as/);
 		assert.match(prompt, /piSubagents\.context: fresh/);
 		assert.doesNotMatch(prompt, /sessionMode:/);

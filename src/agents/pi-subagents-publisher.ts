@@ -13,8 +13,8 @@
 
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { parseFrontmatter } from "./frontmatter.ts";
 import type { ModelTierSetting } from "../shared/types.ts";
+import { parseFrontmatter } from "./frontmatter.ts";
 
 /**
  * Marker constant for managed agent files.
@@ -140,11 +140,7 @@ export function publishSuperpowersRoleAgents(options: PublishOptions): string[];
  * @param config Normalization configuration.
  * @returns Array of filenames that were written (created or updated).
  */
-export function publishSuperpowersRoleAgents(
-	sourceAgents: Array<{ name: string; content: string }>,
-	destDir: string,
-	config: NormalizationConfig,
-): string[];
+export function publishSuperpowersRoleAgents(sourceAgents: Array<{ name: string; content: string }>, destDir: string, config: NormalizationConfig): string[];
 
 /**
  * Implementation of publishSuperpowersRoleAgents.

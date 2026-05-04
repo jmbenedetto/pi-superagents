@@ -1,8 +1,8 @@
 /**
  * E2E test: extension loading and tool registration.
  *
- * Uses pi-test-harness createTestSession to verify that the extension
- * loads correctly and the foreground subagent tool responds to calls.
+ * Uses pi-test-harness createTestSession to verify that pi-superagents
+ * loads correctly without owning the canonical Pi Subagents `subagent` tool.
  */
 
 import assert from "node:assert/strict";
@@ -21,17 +21,14 @@ void describe("extension loading", { skip: !available ? "pi-test-harness not ava
 
 	afterEach(() => t?.dispose());
 
-	void it("loads extension and subagent tool responds", async () => {
+	void it("loads extension without registering the subagent tool", async () => {
 		t = await createTestSession({
 			extensions: [EXTENSION],
 			mockTools: { bash: "ok", read: "ok", write: "ok", edit: "ok" },
 		});
 
-		await t.run(when("Run recon", [calls("subagent", { agent: "sp-recon", task: "hello" }), says("Done.")]));
+		await t.run(when("Try delegated recon", [calls("subagent", { agent: "sp-recon", task: "hello" }), says("Pi Subagents owns that tool.")]));
 
-		const results = t.events.toolResultsFor("subagent");
-		assert.equal(results.length, 1, "subagent tool should respond");
-		// sp-recon is a builtin agent, so this should not be an agent-not-found error
-		assert.ok(!results[0].isError, `should not be an error: ${results[0].text}`);
+		assert.equal(t.events.toolResultsFor("subagent").length, 0, "pi-superagents must not register subagent");
 	});
 });
