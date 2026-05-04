@@ -8,7 +8,7 @@
 - **Role-Specific Agents**: Thin agents-layer for every phase of the development lifecycle.
 - **Model Tiers & Command Settings**: Abstract model selection (cheap, balanced, max) for each agent. One model can be configured per tier. Custom tiers are possible. Models and command-scoped behavior toggles can be changed through the `/sp-settings` TUI; slash-command metadata lives in entrypoint agent frontmatter.
 - **Compact Inline Subagent Results**: Subagent tool results render as collapsed single-line summaries with an expandable details view, keeping the Pi conversation readable during multi-step Superpowers workflows.
-- **Lineage-Only Sessions**: Bounded Superpowers roles default to `sessionMode: lineage-only`. Child sessions stay linked to the parent for session tree visibility, but do not inherit parent conversation turns.
+- **Fresh Context Sessions**: Bounded Superpowers roles default to `context: "fresh"` via Pi Subagents. Child sessions stay linked to the parent for session tree visibility, but do not inherit parent conversation turns.
 - **Packet Handoffs**: Work briefs are delivered through runtime-managed packet artifacts in the session artifact directory, automatically cleaned up after the child exits.
 - **Inline Agent Handoffs**: Role outputs are returned through Pi tool results and session artefacts.
 - **Worktree Isolation**: Optional git worktree creation for parallel tasks to prevent filesystem conflicts (setting).
@@ -25,7 +25,19 @@ pi install npm:@teelicht/pi-superagents
 > [!NOTE]
 > This tool requires the `superpowers` skills to be installed. Easy installation via [https://skills.sh/obra/superpowers](https://skills.sh/obra/superpowers).
 
+> [!IMPORTANT]
+> `pi-superagents` does **not** register the `subagent` tool. When `useSubagents` is enabled, install `pi-subagents` separately:
+> ```bash
+> pi install npm:pi-subagents
+> ```
+
 On install, `pi-superagents` creates `config.json` from the bundled defaults:
+
+```text
+~/.pi/agent/extensions/pi-superagents/config.json
+```
+
+Pi Subagents config (when installed) lives separately at:
 
 ```text
 ~/.pi/agent/extensions/subagent/config.json
@@ -46,7 +58,6 @@ Superpowers slash commands are registered from interactive entrypoint agent fron
 | `/sp-brainstorm <task>` | Brainstorm a task and save a spec, optionally review it with Plannotator UI |
 | `/sp-plan <task>`       | Plan a task with optional Plannotator plan review                           |
 | `/sp-implement <task>`  | Run an implementation task through the Superpowers flow                     |
-| `/subagents-status`     | Open active and recent subagent run status, including resolved skills       |
 | `/sp-settings`          | Open superagents settings                                                   |
 
 ### Custom Commands
@@ -65,7 +76,10 @@ The `/sp-implement` command activates a structured workflow for task execution w
 4. **Review** (`sp-code-review`): Automated review of changes against project standards.
 5. **Debug** (`sp-debug`): Root cause analysis and fix verification for regressions.
 
-Subagent-driven development keeps implementer and reviewer reports inline in the Pi conversation. Bounded roles default to `lineage-only` — they see a curated work brief rather than the full parent conversation history. The runtime does not create repo-root packet files such as `implementer-report.md`, `spec-review.md`, `code-review.md`, `debug-brief.md`, or `task-brief.md`; those names are ignored if an older prompt or manual run creates them.
+Subagent-driven development keeps implementer and reviewer reports inline in the Pi conversation. Bounded roles default to `context: "fresh"` — they see a curated work brief rather than the full parent conversation history. The runtime does not create repo-root packet files such as `implementer-report.md`, `spec-review.md`, `code-review.md`, `debug-brief.md`, or `task-brief.md`; those names are ignored if an older prompt or manual run creates them.
+
+> [!NOTE]
+> Use `subagent({ action: "status" })` (provided by Pi Subagents) to check canonical subagent runtime status when both packages are installed.
 
 ## Configuration & Documentation
 

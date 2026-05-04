@@ -1,6 +1,11 @@
 # Parameters API Reference
 
-These are the parameters the **LLM agent** passes when it calls the `subagent` tool. These parameters are used to delegate work to Superpowers role agents.
+These are the parameters the **LLM agent** passes when it calls the `subagent` tool (provided by Pi Subagents). These parameters are used to delegate work to Superpowers role agents.
+
+> [!IMPORTANT]
+> `pi-superagents` does **not** register the `subagent` tool. Install `pi-subagents` separately when `useSubagents` is enabled.
+>
+> When delegating to Pi Subagents, use `context: "fresh" | "fork"` instead of `sessionMode` parameters. Pi Subagents does not support Superagents-specific `sessionMode` or legacy parameter conventions.
 
 ## Tool Parameters
 
@@ -11,14 +16,14 @@ These are the parameters the **LLM agent** passes when it calls the `subagent` t
 | `tasks`           | `TaskItem[]`                            | -                         | Array of tasks for parallel execution. Each item must specify `agent` and `task`. |
 | `workflow`        | `"superpowers"`                         | `"superpowers"`           | Explicitly marks the run as a Superpowers workflow. Only `superpowers` is supported. |
 | `useTestDrivenDevelopment` | boolean                        | explicit root prompt value; omitted direct tool calls default to `false` | Enables test-driven development guidance for `sp-implementer` tasks. Root Superpowers prompts instruct agents to pass the resolved command value explicitly. |
-| `sessionMode`     | `"standalone" \| "lineage-only" \| "fork"` | `"lineage-only"` (bounded roles) | Child session visibility mode. `lineage-only` links to parent session tree without inheriting conversation turns; `fork` inherits full parent history; `standalone` is fully isolated. |
+| `context`         | `"fresh" \| "fork"` | `"fresh"` (bounded roles) | Pi Subagents context mode. `fresh` links to parent session tree without inheriting conversation turns; `fork` inherits full parent history. **Do not use Superagents `sessionMode` parameter** when calling Pi Subagents. |
 | `cwd`             | string                                  | parent cwd                | Working directory for the subagent. |
 | `skill`           | `string \| string[] \| false`           | agent default             | Skills to inject into the agent prompt. `false` disables all skills. |
 | `model`           | string                                  | agent default             | Override the model for this specific run. Can be a concrete ID or a tier name (`cheap`, `balanced`, `max`). |
 | `artifacts`       | boolean                                 | `true`                    | Whether to write debug artifacts (input/output logs). |
 | `includeProgress` | boolean                                 | `false`                   | Whether to include full internal progress metadata in the result. |
 
-Resolved skills, including per-call `skill` overrides and agent frontmatter defaults, are shown in `/subagents-status` for active and recent subagent runs. Missing skills are shown as warnings there. The bundled `sp-debug` role resolves `systematic-debugging` from its frontmatter unless a call overrides or disables skills.
+Resolved skills, including per-call `skill` overrides and agent frontmatter defaults, can be inspected via `subagent({ action: "status" })` when Pi Subagents is installed. Missing skills are shown as warnings there. The bundled `sp-debug` role resolves `systematic-debugging` from its frontmatter unless a call overrides or disables skills.
 
 Provide either `agent` plus `task` for a single delegation, or `tasks` for parallel delegation. The runtime validates this selector after Pi accepts the tool call; the machine-readable schema stays intentionally simple for host compatibility.
 
@@ -38,11 +43,13 @@ Subagent output is inline: the child Pi process streams assistant text back thro
 
 ## Session Mode
 
-`sessionMode` controls how much of the parent session the subagent receives:
+`context` controls how much of the parent session the subagent receives (Pi Subagents parameter):
 
-- **`lineage-only`** (default for bounded roles): The child session is linked to the parent for `/tree` visibility, but it does not inherit parent conversation turns. The child receives a curated work-brief packet instead. This is the recommended default for bounded Superpowers roles.
+- **`fresh`** (default for bounded roles): The child session is linked to the parent for `/tree` visibility, but it does not inherit parent conversation turns. The child receives a curated work-brief packet instead. This is the recommended default for bounded Superpowers roles.
 - **`fork`**: The child inherits the full parent conversation history as read-only context, working in its own isolated branch. Useful when the subagent genuinely needs the full session background.
-- **`standalone`**: Fully isolated session with no parent linkage or inherited context.
+
+> [!NOTE]
+> Pass `context: "fresh"` for Superpowers role agents unless the user explicitly requests forked context. Do not use Superagents `sessionMode` in subagent calls.
 
 ## Artifacts
 
@@ -79,7 +86,7 @@ Subagent tool results are rendered inline in the Pi conversation. The renderer p
 - **Collapsed**: status line, task name, current tool activity, and timing stats.
 - **Expanded**: model, skills, recent tools, bounded output preview, errors, session file, and artifact paths.
 
-This applies to both single and parallel subagent executions. Use `/subagents-status` for a dedicated overlay of active and recent runs.
+This applies to both single and parallel subagent executions. When Pi Subagents is installed, use `subagent({ action: "status" })` to inspect active and recent runs.
 
 ## Release Notes
 
