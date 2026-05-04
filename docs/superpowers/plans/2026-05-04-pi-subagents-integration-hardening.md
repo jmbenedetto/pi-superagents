@@ -451,7 +451,7 @@ git commit -m "fix: isolate superagents config from pi-subagents config"
 - Modify: `src/superpowers/root-prompt.ts`
 - Test: `test/unit/superpowers-root-prompt.test.ts`
 
-- [ ] **Step 1: Write failing prompt tests**
+- [x] **Step 1: Write failing prompt tests**
 
 Update tests to assert:
 
@@ -462,7 +462,7 @@ assert.doesNotMatch(prompt, /sessionMode: lineage-only/);
 assert.doesNotMatch(prompt, /useTestDrivenDevelopment/);
 ```
 
-- [ ] **Step 2: Run focused test to verify failure**
+- [x] **Step 2: Run focused test to verify failure**
 
 Run:
 
@@ -473,7 +473,7 @@ node --experimental-strip-types --test test/unit/superpowers-root-prompt.test.ts
 
 Expected: FAIL because existing prompt still renders `sessionMode` and legacy wording.
 
-- [ ] **Step 3: Change metadata renderer**
+- [x] **Step 3: Change metadata renderer**
 
 In `buildMetadata`, replace:
 
@@ -487,7 +487,7 @@ With:
 lines.push(`piSubagents.context: ${input.fork ? "fork" : "fresh"}`);
 ```
 
-- [ ] **Step 4: Change delegation contract wording**
+- [x] **Step 4: Change delegation contract wording**
 
 Replace the delegation TDD sentence with:
 
@@ -497,7 +497,7 @@ Replace the delegation TDD sentence with:
 "When TDD is required, include the TDD requirement in the child task text or pass `skill: \"test-driven-development\"` when that role should receive the skill.",
 ```
 
-- [ ] **Step 5: Update visible summary**
+- [x] **Step 5: Update visible summary**
 
 Change:
 
@@ -511,7 +511,7 @@ To:
 configLines.push(`piSubagents.context: ${input.fork ? "fork" : "fresh"}`);
 ```
 
-- [ ] **Step 6: Run focused test**
+- [x] **Step 6: Run focused test**
 
 Run:
 
@@ -522,7 +522,7 @@ node --experimental-strip-types --test test/unit/superpowers-root-prompt.test.ts
 
 Expected: PASS.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src/superpowers/root-prompt.ts test/unit/superpowers-root-prompt.test.ts
