@@ -627,7 +627,7 @@ git commit -m "fix: remove stale superagents subagent status UI"
 - Modify: `CHANGELOG.md`
 - Modify: `config.example.json`
 
-- [ ] **Step 1: Update docs wording**
+- [x] **Step 1: Update docs wording**
 
 Document:
 
@@ -640,7 +640,7 @@ Document:
 - Use `subagent({ action: "status" })` or `/subagents-doctor` for canonical subagent runtime status.
 ```
 
-- [ ] **Step 2: Update example config**
+- [x] **Step 2: Update example config**
 
 Ensure `config.example.json` contains only Superagents keys:
 
@@ -664,7 +664,7 @@ Ensure `config.example.json` contains only Superagents keys:
 }
 ```
 
-- [ ] **Step 3: Run docs-adjacent tests**
+- [x] **Step 3: Run docs-adjacent tests**
 
 Run:
 
@@ -675,7 +675,7 @@ node --experimental-strip-types --test test/unit/default-config.test.ts test/uni
 
 Expected: PASS.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add README.md docs/configuration.md docs/parameters.md docs/skills.md CHANGELOG.md config.example.json
