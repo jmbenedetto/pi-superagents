@@ -45,7 +45,7 @@ function buildMetadata(input: SuperpowersRootPromptInput): string {
 	if (input.useTestDrivenDevelopment !== undefined) lines.push(`useTestDrivenDevelopment: ${input.useTestDrivenDevelopment}`);
 	if (input.usePlannotatorReview !== undefined) lines.push(`usePlannotatorReview: ${input.usePlannotatorReview}`);
 	if (input.worktrees !== undefined) lines.push(`worktrees.enabled: ${input.worktrees.enabled}`);
-	lines.push(`sessionMode: ${input.fork ? "fork" : "lineage-only"}`);
+	lines.push(`piSubagents.context: ${input.fork ? "fork" : "fresh"}`);
 	return lines.join("\n");
 }
 
@@ -145,11 +145,9 @@ function buildDelegationContract(useSubagents: boolean, useTestDrivenDevelopment
 			"Subagent delegation is ENABLED by config.",
 			"When a selected Superpowers skill calls for delegated work, you must use the `subagent` tool rather than doing that delegated work inline.",
 			"This applies especially to implementation-plan execution, independent parallel investigations, bounded implementation, review, focused research, and debugging workflows.",
-			...(useTestDrivenDevelopment !== undefined
-				? [
-						`When delegating, do not pass Superagents-only parameters such as \`useTestDrivenDevelopment\`; this fork expects the external PI Sub-Agents \`subagent\` tool to handle delegation.`,
-					]
-				: []),
+			"Pi Subagents uses `context: \"fresh\" | \"fork\"`; it does not support Superagents `sessionMode` or `useTestDrivenDevelopment` parameters.",
+			"When delegating to Superpowers role agents (`sp-recon`, `sp-research`, `sp-debug`, `sp-implementer`, `sp-spec-review`, `sp-code-review`), pass `context: \"fresh\"` unless the user explicitly requested forked context.",
+			"When TDD is required, include the TDD requirement in the child task text or pass `skill: \"test-driven-development\"` when that role should receive the skill.",
 			"Do not skip subagent delegation merely because you can do the work yourself.",
 			"Stay inline only for clarification, tiny answer-only tasks, unavailable tools, or when delegation is genuinely inappropriate.",
 			"If you do not use a subagent for a non-trivial workflow step, state the concrete reason.",
@@ -292,7 +290,7 @@ export function buildSuperpowersVisiblePromptSummary(input: SuperpowersRootPromp
 	if (input.useTestDrivenDevelopment !== undefined) configLines.push(`useTestDrivenDevelopment: ${input.useTestDrivenDevelopment}`);
 	if (input.usePlannotatorReview !== undefined) configLines.push(`usePlannotatorReview: ${input.usePlannotatorReview}`);
 	if (input.worktrees !== undefined) configLines.push(`worktrees.enabled: ${input.worktrees.enabled}`);
-	configLines.push(`sessionMode: ${input.fork ? "fork" : "lineage-only"}`);
+	configLines.push(`context: ${input.fork ? "fork" : "fresh"}`);
 
 	return [`Superpowers ▸ ${input.task}`, "", "Config:", configLines.join("\n")].join("\n");
 }
