@@ -263,6 +263,40 @@ void describe("loadRuntimeConfigState", () => {
 		assert.equal(model, "shared-model");
 	});
 
+	it("uses defaults when legacy config has no superagents section", () => {
+		const packageDir = createTempConfigDir({
+			"default-config.json": JSON.stringify({
+				superagents: {
+					modelTiers: { cheap: { model: "default-model" } },
+				},
+			}),
+		});
+		const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "pi-config-legacy-no-superagents-test-"));
+		const userDir = path.join(tempRoot, "pi-superagents");
+		const legacyDir = path.join(tempRoot, "subagent");
+		fs.mkdirSync(legacyDir, { recursive: true });
+		fs.writeFileSync(
+			path.join(legacyDir, "config.json"),
+			JSON.stringify({
+				asyncByDefault: true,
+				intercomBridge: { mode: "auto" },
+				maxSubagentDepth: 3,
+			}),
+			"utf-8",
+		);
+
+		const state = loadRuntimeConfigState(packageDir, userDir);
+
+		assert.equal(state.blocked, false, "Legacy pi-subagents-only config should not block pi-superagents");
+		assert.ok(
+			!state.diagnostics.some((d) => d.path === "asyncByDefault" || d.path === "intercomBridge" || d.path === "maxSubagentDepth"),
+			"Should not have diagnostics for pi-subagents-only legacy keys",
+		);
+		const cheapTier = state.config.superagents?.modelTiers?.cheap;
+		const model = typeof cheapTier === "object" ? cheapTier.model : cheapTier;
+		assert.equal(model, "default-model");
+	});
+
 	it("prefers new config over legacy config when both exist", () => {
 		const packageDir = createTempConfigDir({
 			"default-config.json": JSON.stringify({ superagents: {} }),

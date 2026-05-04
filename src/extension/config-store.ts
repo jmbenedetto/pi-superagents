@@ -118,8 +118,8 @@ function extractSuperagentsConfig(raw: unknown): unknown {
 	if (topLevelKeys.every((key) => key === "superagents")) return raw;
 	// If config contains `superagents` plus other keys, extract only `superagents`
 	if ("superagents" in record) return { superagents: record.superagents };
-	// Otherwise return the original config as-is
-	return raw;
+	// Legacy pi-subagents-only configs should not block pi-superagents; use defaults.
+	return {};
 }
 
 /**
