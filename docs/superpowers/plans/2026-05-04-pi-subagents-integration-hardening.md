@@ -256,7 +256,7 @@ git commit -m "feat: publish superpowers agents for pi-subagents"
 - Modify: `src/extension/index.ts`
 - Test: `test/integration/slash-commands.test.ts`
 
-- [ ] **Step 1: Write/update failing integration assertion**
+- [x] **Step 1: Write/update failing integration assertion**
 
 In `test/integration/slash-commands.test.ts`, update the session-start test that currently expects raw copy behavior so it expects managed publishing and no old `subagent` tool registration.
 
@@ -267,7 +267,7 @@ assert.equal(tools.has("subagent"), false, "pi-superagents must not register the
 assert.ok(notifications.some((n) => /Installed global Superpowers role agents for PI Sub-Agents/.test(n.message)));
 ```
 
-- [ ] **Step 2: Run focused integration test to verify failure**
+- [x] **Step 2: Run focused integration test to verify failure**
 
 Run:
 
@@ -278,7 +278,7 @@ npm run test:integration -- test/integration/slash-commands.test.ts
 
 Expected: FAIL if tests still expect old copy helper behavior or raw `session-mode` frontmatter.
 
-- [ ] **Step 3: Modify `src/extension/index.ts` imports**
+- [x] **Step 3: Modify `src/extension/index.ts` imports**
 
 Remove old unused execution imports:
 
@@ -295,11 +295,11 @@ Add:
 import { publishSuperpowersRoleAgents } from "../agents/pi-subagents-publisher.ts";
 ```
 
-- [ ] **Step 4: Remove old unused `tool` construction**
+- [x] **Step 4: Remove old unused `tool` construction**
 
 Delete the local `const tool: ToolDefinition<typeof SubagentParams, Details> = { ... }` block and the `effectiveParallelTaskCount` helper if no longer referenced.
 
-- [ ] **Step 5: Replace `ensureUserSuperpowersRoleAgents` implementation**
+- [x] **Step 5: Replace `ensureUserSuperpowersRoleAgents` implementation**
 
 Replace direct copy logic with:
 
@@ -313,7 +313,7 @@ function ensureUserSuperpowersRoleAgents(packageRoot: string, config: ExtensionC
 }
 ```
 
-- [ ] **Step 6: Update session-start call site**
+- [x] **Step 6: Update session-start call site**
 
 Change:
 
@@ -327,7 +327,7 @@ To:
 const copiedAgents = ensureUserSuperpowersRoleAgents(packageRoot, configStore.getConfig());
 ```
 
-- [ ] **Step 7: Run focused tests**
+- [x] **Step 7: Run focused tests**
 
 Run:
 
@@ -339,7 +339,7 @@ npm run test:integration -- test/integration/slash-commands.test.ts
 
 Expected: PASS.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add src/extension/index.ts test/integration/slash-commands.test.ts
