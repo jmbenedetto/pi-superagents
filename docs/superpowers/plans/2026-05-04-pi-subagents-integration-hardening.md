@@ -66,7 +66,7 @@
 - Create: `src/agents/pi-subagents-publisher.ts`
 - Test: `test/unit/pi-subagents-publisher.test.ts`
 
-- [ ] **Step 1: Write failing tests for frontmatter normalization**
+- [x] **Step 1: Write failing tests for frontmatter normalization**
 
 Create `test/unit/pi-subagents-publisher.test.ts` with tests that assert:
 
@@ -118,7 +118,7 @@ Review.`;
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run:
 
@@ -129,7 +129,7 @@ npm run test:unit -- test/unit/pi-subagents-publisher.test.ts
 
 Expected: FAIL because `src/agents/pi-subagents-publisher.ts` does not exist.
 
-- [ ] **Step 3: Implement normalization module**
+- [x] **Step 3: Implement normalization module**
 
 Create `src/agents/pi-subagents-publisher.ts` with:
 
@@ -230,7 +230,7 @@ export function publishSuperpowersRoleAgents(input: {
 }
 ```
 
-- [ ] **Step 4: Run focused test**
+- [x] **Step 4: Run focused test**
 
 Run:
 
@@ -241,7 +241,7 @@ node --experimental-strip-types --test test/unit/pi-subagents-publisher.test.ts
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/agents/pi-subagents-publisher.ts test/unit/pi-subagents-publisher.test.ts
