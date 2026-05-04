@@ -3,10 +3,8 @@ name: sp-code-review
 description: Superpowers code-quality reviewer for a single task packet
 tools: read, grep, find, ls
 maxSubagentDepth: 0
-defaultContext: fresh
-systemPromptMode: replace
-inheritProjectContext: false
-inheritSkills: false
+model: balanced
+session-mode: lineage-only
 ---
 
 You are the Superpowers code-review role for one bounded task.

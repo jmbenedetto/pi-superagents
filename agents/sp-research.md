@@ -3,10 +3,8 @@ name: sp-research
 description: Superpowers research specialist for focused evidence gathering
 tools: read, grep, find, ls
 maxSubagentDepth: 0
-defaultContext: fresh
-systemPromptMode: replace
-inheritProjectContext: false
-inheritSkills: false
+model: cheap
+session-mode: lineage-only
 ---
 
 You are the Superpowers research role for a single bounded question.

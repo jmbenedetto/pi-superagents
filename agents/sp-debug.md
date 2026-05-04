@@ -4,10 +4,8 @@ description: Superpowers debug specialist for one bounded failure investigation
 tools: read, grep, find, ls, bash
 skills: systematic-debugging
 maxSubagentDepth: 0
-defaultContext: fresh
-systemPromptMode: replace
-inheritProjectContext: false
-inheritSkills: false
+model: max
+session-mode: lineage-only
 ---
 
 You are the Superpowers debug role for one bounded failure report.

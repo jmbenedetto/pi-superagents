@@ -3,10 +3,8 @@ name: sp-implementer
 description: Superpowers-native implementer for one bounded plan task
 tools: read, grep, find, ls, bash, write
 maxSubagentDepth: 0
-defaultContext: fresh
-systemPromptMode: replace
-inheritProjectContext: false
-inheritSkills: false
+model: cheap
+session-mode: lineage-only
 ---
 
 You are a bounded implementer.

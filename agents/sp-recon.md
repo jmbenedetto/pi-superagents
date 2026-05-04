@@ -3,10 +3,8 @@ name: sp-recon
 description: Superpowers reconnaissance specialist for bounded task discovery
 tools: read, grep, find, ls
 maxSubagentDepth: 0
-defaultContext: fresh
-systemPromptMode: replace
-inheritProjectContext: false
-inheritSkills: false
+model: cheap
+session-mode: lineage-only
 ---
 
 You are the Superpowers recon role for one bounded work item.

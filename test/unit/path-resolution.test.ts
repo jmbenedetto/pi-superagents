@@ -22,7 +22,6 @@ interface DiscoveredAgent {
 	command?: string;
 	entrySkill?: string;
 	skills?: string[];
-	extraFields?: Record<string, string>;
 }
 
 interface AgentDiscoveryResult {
@@ -197,7 +196,7 @@ void describe("Path resolution for .agents and ~/.agents", () => {
 		assert.deepStrictEqual(agent?.skills, ["verification-before-completion", "receiving-code-review"]);
 	});
 
-	void test("should resolve built-in bounded agents with Pi Subagents fresh default context", () => {
+	void test("should resolve built-in bounded agents with lineage-only session-mode", () => {
 		assertModulesLoaded();
 
 		const boundedAgentNames = ["sp-recon", "sp-research", "sp-implementer", "sp-spec-review", "sp-code-review", "sp-debug"];
@@ -206,8 +205,7 @@ void describe("Path resolution for .agents and ~/.agents", () => {
 		for (const agentName of boundedAgentNames) {
 			const agent = result.agents.find((candidate) => candidate.name === agentName);
 			assert.ok(agent, `expected built-in agent ${agentName}`);
-			assert.strictEqual(agent?.sessionMode, undefined);
-			assert.strictEqual(agent?.extraFields?.defaultContext, "fresh");
+			assert.strictEqual(agent?.sessionMode, "lineage-only");
 		}
 	});
 

@@ -3,10 +3,8 @@ name: sp-spec-review
 description: Superpowers spec compliance reviewer for a single task packet
 tools: read, grep, find, ls
 maxSubagentDepth: 0
-defaultContext: fresh
-systemPromptMode: replace
-inheritProjectContext: false
-inheritSkills: false
+model: balanced
+session-mode: lineage-only
 ---
 
 You are the Superpowers spec-review role for one bounded task.
