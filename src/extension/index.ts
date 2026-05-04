@@ -12,22 +12,18 @@ import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 import type { AgentToolResult } from "@mariozechner/pi-agent-core";
 import type { ExtensionAPI, ExtensionContext, ToolDefinition } from "@mariozechner/pi-coding-agent";
-import { Text } from "@mariozechner/pi-tui";
 import { Type } from "typebox";
 import { discoverAgents } from "../agents/agents.ts";
-import { createSubagentExecutor } from "../execution/subagent-executor.ts";
+import { publishSuperpowersRoleAgents } from "../agents/pi-subagents-publisher.ts";
 import { requestPlannotatorPlanReview } from "../integrations/plannotator.ts";
 import { cleanupAllArtifactDirs, cleanupOldArtifacts, getArtifactsDir } from "../shared/artifacts.ts";
-import { SubagentParams } from "../shared/schemas.ts";
 import { resolveAvailableSkill, resolveSkills } from "../shared/skills.ts";
-import type { SubagentParamsLike } from "../shared/types.ts";
-import { DEFAULT_ARTIFACT_CONFIG, type Details, type SubagentState } from "../shared/types.ts";
+import { DEFAULT_ARTIFACT_CONFIG, type Details, type ExtensionConfig, type SubagentState } from "../shared/types.ts";
 import { registerSlashCommands } from "../slash/slash-commands.ts";
 import { createSuperpowersPromptDispatcher } from "../superpowers/prompt-dispatch.ts";
 import { buildSuperpowersVisiblePromptSummary } from "../superpowers/root-prompt.ts";
 import { buildResolvedSkillEntryPrompt, parseSkillCommandInput, shouldInterceptSkillCommand } from "../superpowers/skill-entry.ts";
 import { parseSuperpowersWorkflowArgs, resolveSuperpowersRunProfile } from "../superpowers/workflow-profile.ts";
-import { renderSubagentResult } from "../ui/render.ts";
 import { createRuntimeConfigStore } from "./config-store.ts";
 
 /**
@@ -145,29 +141,22 @@ function discoverEntrypointCommandNames(cwd: string): string[] {
  *
  * Pi packages do not currently expose an `agents` resource type. PI Sub-Agents
  * discovers agents from `.agents/agents` and `~/.agents/agents`, so this fork
- * mirrors bundled `agents/sp-*.md` files into the user's global
- * `~/.agents/agents` directory by default. Existing files are never overwritten.
+ * publishes bundled `agents/sp-*.md` files into the user's global
+ * `~/.agents/agents` directory with Pi-Subagents-compatible frontmatter.
  *
  * @param packageRoot Root directory containing the bundled `agents/` folder.
- * @returns Names of agent files copied during this call.
+ * @param config Extension config containing model tier mappings.
+ * @returns Names of agent files published during this call.
  */
-function ensureUserSuperpowersRoleAgents(packageRoot: string): string[] {
+function ensureUserSuperpowersRoleAgents(packageRoot: string, config: ExtensionConfig): string[] {
 	const bundledAgentsDir = path.join(packageRoot, "agents");
-	if (!fs.existsSync(bundledAgentsDir)) return [];
-
 	const userAgentsDir = path.join(os.homedir(), ".agents", "agents");
-	fs.mkdirSync(userAgentsDir, { recursive: true });
 
-	const copied: string[] = [];
-	for (const fileName of fs.readdirSync(bundledAgentsDir)) {
-		if (!/^sp-.*\.md$/.test(fileName)) continue;
-		const sourcePath = path.join(bundledAgentsDir, fileName);
-		const targetPath = path.join(userAgentsDir, fileName);
-		if (fs.existsSync(targetPath)) continue;
-		fs.copyFileSync(sourcePath, targetPath);
-		copied.push(fileName);
-	}
-	return copied;
+	return publishSuperpowersRoleAgents({
+		bundledAgentsDir,
+		userAgentsDir,
+		config: { modelTiers: config.superagents?.modelTiers ?? {} },
+	});
 }
 
 const SuperpowersPlanReviewParams = Type.Object({
@@ -246,37 +235,6 @@ export default function registerSubagentExtension(pi: ExtensionAPI): void {
 	state.configGate = configStore.getGateState();
 
 	cleanupAllArtifactDirs(DEFAULT_ARTIFACT_CONFIG.cleanupDays);
-
-	const executor = createSubagentExecutor({
-		state,
-		getConfig: () => configStore.getConfig(),
-		getSubagentSessionRoot,
-		discoverAgents,
-	});
-
-	/**
-	 * Count the effective number of parallel subagent tasks for status rendering.
-	 *
-	 * @param tasks Parallel task definitions that may include explicit `count` fan-out.
-	 * @returns Total number of concrete task slots implied by the request.
-	 */
-	function effectiveParallelTaskCount(tasks: Array<{ count?: unknown }> | undefined): number {
-		if (!tasks || tasks.length === 0) return 0;
-		return tasks.reduce((total, task) => {
-			const count = typeof task.count === "number" && Number.isInteger(task.count) && task.count >= 1 ? task.count : 1;
-			return total + count;
-		}, 0);
-	}
-
-	/**
-	 * Build a blocking tool result for invalid config.
-	 *
-	 * @param message User-facing config diagnostic message.
-	 * @returns Tool result that refuses execution.
-	 */
-	function configBlockedResult(message: string): AgentToolResult<Details> {
-		return createTextToolResult(message);
-	}
 
 	/**
 	 * Execute the root-session Plannotator plan review bridge.
@@ -399,44 +357,12 @@ Continue with the normal text-based Superpowers review flow.`,
 		},
 	};
 
-	const tool: ToolDefinition<typeof SubagentParams, Details> = {
-		name: "subagent",
-		label: "Subagent",
-		description: `Delegate bounded work to Superpowers role subagents.
 
-Use this tool only inside a Superpowers workflow when selected skills call for delegation.
-
-SINGLE: { agent: "sp-recon", task: "Inspect the auth flow" }
-PARALLEL: { tasks: [{ agent: "sp-research", task: "Check config" }, { agent: "sp-code-review", task: "Review diff" }] }
-
-Allowed role agents: sp-recon, sp-research, sp-implementer, sp-spec-review, sp-code-review, sp-debug.
-Bounded role agents are not allowed to call subagents.`,
-		parameters: SubagentParams,
-
-		execute(id, params, signal, onUpdate, ctx) {
-			if (state.configGate.blocked) {
-				return Promise.resolve(configBlockedResult(state.configGate.message));
-			}
-			return executor.execute(id, params as unknown as SubagentParamsLike, signal ?? new AbortController().signal, onUpdate, ctx);
-		},
-
-		renderCall(args, theme) {
-			const isParallel = (args.tasks?.length ?? 0) > 0;
-			const parallelCount = effectiveParallelTaskCount(args.tasks as Array<{ count?: unknown }> | undefined);
-			if (isParallel) return new Text(`${theme.fg("toolTitle", theme.bold("subagent "))}parallel (${parallelCount})`, 0, 0);
-			return new Text(`${theme.fg("toolTitle", theme.bold("subagent "))}${theme.fg("accent", args.agent || "?")}`, 0, 0);
-		},
-
-		renderResult(result, options, theme) {
-			return renderSubagentResult(result, options, theme);
-		},
-	};
 
 	pi.registerTool(planReviewTool);
 	pi.registerTool(specReviewTool);
-	// Do not register Superagents' own `subagent` tool.
-	// This fork intentionally leaves the `subagent` tool name available for
-	// PI Sub-Agents so both extensions can be loaded together.
+	// pi-superagents does not register the `subagent` tool.
+	// The `subagent` tool is owned by pi-subagents and must be installed separately.
 	registerSlashCommands(
 		pi,
 		state,
@@ -515,12 +441,6 @@ Bounded role agents are not allowed to call subagents.`,
 		return { action: "handled" as const };
 	});
 
-	pi.on("tool_result", (event, ctx) => {
-		if (event.toolName !== "subagent") return;
-		if (!ctx.hasUI) return;
-		state.lastUiContext = ctx;
-	});
-
 	const cleanupSessionArtifacts = (ctx: ExtensionContext) => {
 		try {
 			const sessionFile = ctx.sessionManager.getSessionFile();
@@ -544,9 +464,9 @@ Bounded role agents are not allowed to call subagents.`,
 	pi.on("session_start", (_event, ctx) => {
 		resetSessionState(ctx);
 		try {
-			const copiedAgents = ensureUserSuperpowersRoleAgents(packageRoot);
-			if (copiedAgents.length > 0 && ctx.hasUI) {
-				ctx.ui.notify(`Installed global Superpowers role agents for PI Sub-Agents: ${copiedAgents.join(", ")}`, "info");
+			const publishedAgents = ensureUserSuperpowersRoleAgents(packageRoot, configStore.getConfig());
+			if (publishedAgents.length > 0 && ctx.hasUI) {
+				ctx.ui.notify(`Installed global Superpowers role agents for PI Sub-Agents: ${publishedAgents.join(", ")}`, "info");
 			}
 		} catch (error) {
 			if (ctx.hasUI) {

@@ -144,10 +144,14 @@ function createState(cwd: string) {
 function createPiHarness() {
 	const commands = new Map<string, CommandSpec>();
 	const shortcuts = new Map<string, ShortcutSpec>();
+	const tools = new Set<string>();
 	const userMessages: Array<{ content: string | unknown[]; options?: { deliverAs?: "steer" | "followUp" } }> = [];
 
 	const pi = {
 		events: createEventBus(),
+		registerTool(tool: { name: string }) {
+			tools.add(tool.name);
+		},
 		registerCommand(name: string, spec: CommandSpec) {
 			commands.set(name, spec);
 		},
@@ -160,7 +164,7 @@ function createPiHarness() {
 		},
 	};
 
-	return { commands, shortcuts, userMessages, pi };
+	return { commands, shortcuts, tools, userMessages, pi };
 }
 
 /**
@@ -229,7 +233,7 @@ function createCommandContext(
 
 void describe("lean superpowers slash commands", { skip: !available ? "slash-commands.ts not importable" : undefined }, () => {
 	void it("registers Superpowers entrypoint commands only", () => {
-		const { commands, shortcuts, pi } = createPiHarness();
+		const { commands, shortcuts, tools, pi } = createPiHarness();
 		const config = createEffectiveConfig({
 			superagents: {
 				commands: {
@@ -252,6 +256,8 @@ void describe("lean superpowers slash commands", { skip: !available ? "slash-com
 		assert.ok(!commands.has("parallel"), "expected /parallel to NOT be registered");
 		assert.ok(!commands.has("agents"), "expected /agents to NOT be registered");
 		assert.match(shortcuts.get("ctrl+alt+s")!.description ?? "", /subagents status/i);
+		// pi-superagents must not register the subagent tool - that's owned by pi-subagents
+		assert.ok(!tools.has("subagent"), "expected subagent tool to NOT be registered by pi-superagents");
 	});
 
 	void it("/sp-implement includes the plannotator review contract when enabled", async () => {
@@ -961,4 +967,8 @@ void describe("lean superpowers slash commands", { skip: !available ? "slash-com
 		assert.match(prompt, /superpowers_plan_review/);
 		assert.doesNotMatch(prompt, /Overlay skills:/);
 	});
+
+	// Note: Full extension registration including session_start event handling
+	// requires importing and calling the default export from src/extension/index.ts.
+	// That test ensures managed publishing is used and notifications are emitted.
 });
