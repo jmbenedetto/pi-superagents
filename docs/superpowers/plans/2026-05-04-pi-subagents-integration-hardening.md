@@ -356,7 +356,7 @@ git commit -m "refactor: delegate agent execution to pi-subagents only"
 - Test: `test/unit/config-store.test.ts`
 - Test: `test/unit/config-validation.test.ts`
 
-- [ ] **Step 1: Write failing config-store tests**
+- [x] **Step 1: Write failing config-store tests**
 
 Add tests to `test/unit/config-store.test.ts` that assert:
 
@@ -376,7 +376,7 @@ If `resolveUserConfigDir` remains private, test via `resolveRuntimeConfigPaths` 
 
 Expected behavior: Superagents extracts/uses only `superagents` instead of failing on `asyncByDefault`.
 
-- [ ] **Step 2: Run focused tests to verify failure**
+- [x] **Step 2: Run focused tests to verify failure**
 
 Run:
 
@@ -387,7 +387,7 @@ node --experimental-strip-types --test test/unit/config-store.test.ts test/unit/
 
 Expected: FAIL because shared Pi Subagents keys are currently unknown top-level keys.
 
-- [ ] **Step 3: Export/dedicate config dir resolver**
+- [x] **Step 3: Export/dedicate config dir resolver**
 
 In `src/extension/index.ts`, change `resolveUserConfigDir()` to:
 
@@ -397,7 +397,7 @@ function resolveUserConfigDir(): string {
 }
 ```
 
-- [ ] **Step 4: Add shared-config extraction in `config-store.ts`**
+- [x] **Step 4: Add shared-config extraction in `config-store.ts`**
 
 Add helper:
 
@@ -414,7 +414,7 @@ function extractSuperagentsConfig(raw: unknown): unknown {
 
 Then pass `extractSuperagentsConfig(userConfig)` into `loadEffectiveConfig`.
 
-- [ ] **Step 5: Add legacy fallback read**
+- [x] **Step 5: Add legacy fallback read**
 
 In `loadRuntimeConfigState`, if new `userConfigPath` is absent, also check:
 
@@ -425,7 +425,7 @@ const userConfig = readJsonConfig(userConfigPath) ?? extractSuperagentsConfig(re
 
 Set `configPath` in the returned state to `userConfigPath`; use diagnostics to mention the legacy path only as warning if desired.
 
-- [ ] **Step 6: Run focused tests**
+- [x] **Step 6: Run focused tests**
 
 Run:
 
@@ -436,7 +436,7 @@ node --experimental-strip-types --test test/unit/config-store.test.ts test/unit/
 
 Expected: PASS.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src/extension/index.ts src/extension/config-store.ts test/unit/config-store.test.ts test/unit/config-validation.test.ts
