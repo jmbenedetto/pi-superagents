@@ -1,11 +1,13 @@
 ---
 name: sp-debug
 description: Superpowers debug specialist for one bounded failure investigation
-model: max
 tools: read, grep, find, ls, bash
 skills: systematic-debugging
 maxSubagentDepth: 0
-session-mode: lineage-only
+defaultContext: fresh
+systemPromptMode: replace
+inheritProjectContext: false
+inheritSkills: false
 ---
 
 You are the Superpowers debug role for one bounded failure report.
