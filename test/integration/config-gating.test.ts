@@ -139,7 +139,7 @@ void describe("extension config gating", { skip: !available ? "extension not imp
 		process.env.USERPROFILE = home;
 	}
 
-	void it("notifies on session start and blocks subagent execution when config is invalid", async () => {
+	void it("notifies diagnostic only on session start when config is invalid", async () => {
 		const home = fs.mkdtempSync(path.join(os.tmpdir(), "pi-config-gate-home-"));
 		tempDirs.push(home);
 		setTestHome(home);
@@ -154,16 +154,16 @@ void describe("extension config gating", { skip: !available ? "extension not imp
 		const ctx = createCtx(notifications);
 		mock.emitLifecycle("session_start", { type: "session_start", reason: "startup" }, ctx);
 
-		assert.equal(notifications.length, 1);
+		// When config is blocked, only the diagnostic notification should be emitted.
+		// No role-agent publishing notifications should appear.
+		assert.equal(notifications.length, 1, "only config diagnostic should be emitted when config is blocked");
 		assert.equal(notifications[0].type, "error");
 		assert.match(notifications[0].message, /pi-superagents is disabled/);
 		assert.match(notifications[0].message, /asyncByDefalt/);
 
-		const result = await mock.tools.get("subagent")!.execute("blocked", { agent: "scout", task: "inspect" }, undefined, undefined, ctx);
-		// AgentToolResult does not include isError; verify the tool responded with non-empty content.
-		const content = (result as { content?: unknown[] }).content;
-		assert.ok(Array.isArray(content) && content.length > 0, "blocked subagent must return non-empty content");
-		assert.match(JSON.stringify(result), /config\.json needs attention/);
+		// pi-superagents does not register the `subagent` tool.
+		// The `subagent` tool is owned by pi-subagents and must be installed separately.
+		assert.ok(!mock.tools.has("subagent"), "pi-superagents should not register subagent tool");
 	});
 
 	void it("session_start notification message surfaces diagnostic field names from invalid config", async () => {

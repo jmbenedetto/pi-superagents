@@ -463,6 +463,15 @@ Continue with the normal text-based Superpowers review flow.`,
 
 	pi.on("session_start", (_event, ctx) => {
 		resetSessionState(ctx);
+		// When config is blocked, only emit diagnostic notification.
+		// Role-agent publishing happens only when config is not blocked.
+		if (state.configGate.blocked) {
+			if (state.configGate.message && ctx.hasUI && configDiagnosticNotifiedForSession !== state.currentSessionId) {
+				configDiagnosticNotifiedForSession = state.currentSessionId;
+				ctx.ui.notify(state.configGate.message, "error");
+			}
+			return;
+		}
 		try {
 			const publishedAgents = ensureUserSuperpowersRoleAgents(packageRoot, configStore.getConfig());
 			if (publishedAgents.length > 0 && ctx.hasUI) {
@@ -476,7 +485,7 @@ Continue with the normal text-based Superpowers review flow.`,
 		}
 		if (state.configGate.message && ctx.hasUI && configDiagnosticNotifiedForSession !== state.currentSessionId) {
 			configDiagnosticNotifiedForSession = state.currentSessionId;
-			ctx.ui.notify(state.configGate.message, state.configGate.blocked ? "error" : "warning");
+			ctx.ui.notify(state.configGate.message, "warning");
 		}
 	});
 	pi.on("session_shutdown", () => {
