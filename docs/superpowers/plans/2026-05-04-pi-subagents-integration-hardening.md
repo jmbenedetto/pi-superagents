@@ -540,7 +540,7 @@ git commit -m "fix: prompt superagents to use pi-subagents context"
 - Potentially remove after reference check: `src/execution/run-history.ts`
 - Test: `test/unit/subagents-status.test.ts`
 
-- [ ] **Step 1: Write failing slash-command test**
+- [x] **Step 1: Write failing slash-command test**
 
 In `test/integration/slash-commands.test.ts`, replace `/subagents-status` expectations with:
 
@@ -549,7 +549,7 @@ assert.equal(commands.has("subagents-status"), false, "pi-superagents must not o
 assert.equal(shortcuts.has("ctrl+alt+s"), false, "pi-superagents must not bind status shortcut for old run history");
 ```
 
-- [ ] **Step 2: Run focused test to verify failure**
+- [x] **Step 2: Run focused test to verify failure**
 
 Run:
 
@@ -560,7 +560,7 @@ npm run test:integration -- test/integration/slash-commands.test.ts
 
 Expected: FAIL because `/subagents-status` is still registered.
 
-- [ ] **Step 3: Remove status command imports**
+- [x] **Step 3: Remove status command imports**
 
 In `src/slash/slash-commands.ts`, remove:
 
@@ -575,7 +575,7 @@ pi.registerCommand("subagents-status", ...);
 pi.registerShortcut("ctrl+alt+s", ...);
 ```
 
-- [ ] **Step 4: Check whether old status files are now unused**
+- [x] **Step 4: Check whether old status files are now unused**
 
 Run:
 
@@ -586,7 +586,7 @@ rg -n "subagents-status|SubagentsStatusComponent|globalRunHistory|run-history" s
 
 Expected: only tests/doc references remain. If source references remain, do not delete files yet.
 
-- [ ] **Step 5: Delete old status tests if source is removed**
+- [x] **Step 5: Delete old status tests if source is removed**
 
 If Step 4 confirms no source references, remove or rewrite:
 
@@ -596,7 +596,7 @@ git rm src/ui/subagents-status.ts src/execution/run-history.ts test/unit/subagen
 
 If source references remain, skip deletion and add a code comment in `src/ui/subagents-status.ts` marking it deprecated and unused.
 
-- [ ] **Step 6: Run focused tests**
+- [x] **Step 6: Run focused tests**
 
 Run:
 
@@ -608,7 +608,7 @@ npm run test:unit
 
 Expected: PASS.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src/slash/slash-commands.ts test/integration/slash-commands.test.ts src/ui/subagents-status.ts src/execution/run-history.ts test/unit/subagents-status.test.ts
