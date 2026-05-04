@@ -90,7 +90,7 @@ function resolvePackageRoot(entryDir: string): string {
  * @returns Absolute path to the user config directory.
  */
 function resolveUserConfigDir(): string {
-	return path.join(os.homedir(), ".pi", "agent", "extensions", "subagent");
+	return path.join(os.homedir(), ".pi", "agent", "extensions", "pi-superagents");
 }
 
 /**

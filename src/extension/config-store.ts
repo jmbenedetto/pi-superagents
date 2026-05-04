@@ -99,7 +99,39 @@ export function readJsonConfig(filePath: string): unknown {
 }
 
 /**
+ * Extract only the `superagents` section from a shared/legacy config.
+ *
+ * When pi-superagents reads the legacy Pi Subagents config at
+ * `~/.pi/agent/extensions/subagent/config.json`, that config may contain
+ * top-level keys owned by pi-subagents (asyncByDefault, intercomBridge, maxSubagentDepth).
+ * To prevent pi-superagents validation from failing on unknown pi-subagents keys,
+ * we extract only the nested `superagents` section when shared keys are detected.
+ *
+ * @param raw Parsed config value from the legacy/shared config file.
+ * @returns Config with only the `superagents` section if shared keys detected, otherwise the original config.
+ */
+function extractSuperagentsConfig(raw: unknown): unknown {
+	if (!raw || typeof raw !== "object" || Array.isArray(raw)) return raw;
+	const record = raw as Record<string, unknown>;
+	const topLevelKeys = Object.keys(record);
+	// If config only contains `superagents`, no extraction needed
+	if (topLevelKeys.every((key) => key === "superagents")) return raw;
+	// If config contains `superagents` plus other keys, extract only `superagents`
+	if ("superagents" in record) return { superagents: record.superagents };
+	// Otherwise return the original config as-is
+	return raw;
+}
+
+/**
  * Load and validate extension config, preserving diagnostics for user display.
+ *
+ * Supports backward compatibility with legacy Pi Subagents config at
+ * `~/.pi/agent/extensions/subagent/config.json` when the new
+ * `~/.pi/agent/extensions/pi-superagents/config.json` is absent.
+ *
+ * When reading from the legacy path, extracts only the nested `superagents` section
+ * to prevent validation failures on pi-subagents top-level keys like
+ * asyncByDefault, intercomBridge, maxSubagentDepth.
  *
  * @param packageConfigDir Absolute path to the package directory containing bundled defaults.
  * @param userConfigDir Absolute path to the user config directory. Defaults to `packageConfigDir`.
@@ -111,7 +143,19 @@ export function loadRuntimeConfigState(packageConfigDir: string, userConfigDir =
 
 	try {
 		const bundledDefaults = (readJsonConfig(bundledDefaultConfigPath) ?? {}) as ExtensionConfig;
-		const userConfig = readJsonConfig(userConfigPath);
+		
+		// Read user config from new path, fall back to legacy path if new path is absent
+		let userConfig = readJsonConfig(userConfigPath);
+		if (userConfig === undefined) {
+			// Legacy fallback: check ~/.pi/agent/extensions/subagent/config.json
+			const legacyConfigPath = path.join(path.dirname(userConfigDir), "subagent", "config.json");
+			const legacyConfig = readJsonConfig(legacyConfigPath);
+			if (legacyConfig !== undefined) {
+				// Extract only the `superagents` section to avoid pi-subagents keys
+				userConfig = extractSuperagentsConfig(legacyConfig);
+			}
+		}
+		
 		const result = loadEffectiveConfig(bundledDefaults, userConfig, { entrypointCommands });
 		const message = result.diagnostics.length ? formatConfigDiagnostics(result.diagnostics, { configPath: userConfigPath, examplePath: exampleConfigPath }) : "";
 
