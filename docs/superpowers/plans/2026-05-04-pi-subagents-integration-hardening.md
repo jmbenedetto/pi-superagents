@@ -689,7 +689,7 @@ git commit -m "docs: document pi-subagents integration contract"
 **Files:**
 - No source changes expected.
 
-- [ ] **Step 1: Run formatting/type/test suite**
+- [x] **Step 1: Run formatting/type/test suite**
 
 Run:
 
@@ -700,7 +700,7 @@ npm run qa
 
 Expected: PASS.
 
-- [ ] **Step 2: Run package list sanity check**
+- [x] **Step 2: Run package list sanity check**
 
 Run:
 
@@ -715,7 +715,7 @@ git:github.com/jmbenedetto/pi-superagents
 npm:pi-subagents
 ```
 
-- [ ] **Step 3: Runtime doctor check**
+- [x] **Step 3: Runtime doctor check**
 
 In a Pi session with both packages enabled, run:
 
@@ -738,7 +738,7 @@ And `sp-recon`, `sp-implementer`, `sp-code-review`, `sp-spec-review`, `sp-debug`
 subagent({ action: "list" })
 ```
 
-- [ ] **Step 4: Foreground smoke test**
+- [x] **Step 4: Foreground smoke test**
 
 Run:
 
@@ -754,7 +754,7 @@ DONE
 
 The parent must stop waiting when the tool result returns.
 
-- [ ] **Step 5: Async smoke test**
+- [x] **Step 5: Async smoke test**
 
 Run:
 
@@ -770,7 +770,7 @@ subagent({ action: "status", id: "<returned-run-id>" })
 
 Expected: state reaches `complete` and does not remain `running` after child final answer.
 
-- [ ] **Step 6: Commit any smoke-test doc adjustments**
+- [x] **Step 6: Commit any smoke-test doc adjustments**
 
 If docs need final tweaks:
 
