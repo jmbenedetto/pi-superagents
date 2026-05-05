@@ -191,6 +191,152 @@ void describe("loadRuntimeConfigState", () => {
 		assert.ok(Array.isArray(state.diagnostics));
 	});
 
+	it("targets pi-superagents directory for new config path", () => {
+		const packageDir = createTempConfigDir({
+			"default-config.json": JSON.stringify({ superagents: {} }),
+		});
+		const userDir = path.join(os.homedir(), ".pi", "agent", "extensions", "pi-superagents");
+		const state = loadRuntimeConfigState(packageDir, userDir);
+
+		assert.equal(state.configPath, path.join(userDir, "config.json"));
+		assert.ok(state.configPath.includes("pi-superagents"));
+		assert.ok(!state.configPath.includes("/subagent/"));
+	});
+
+	it("reads legacy subagent config when new config is absent", () => {
+		const packageDir = createTempConfigDir({
+			"default-config.json": JSON.stringify({ superagents: {} }),
+		});
+		const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "pi-config-legacy-test-"));
+		const userDir = path.join(tempRoot, "pi-superagents");
+		const legacyDir = path.join(tempRoot, "subagent");
+		fs.mkdirSync(legacyDir, { recursive: true });
+		fs.writeFileSync(
+			path.join(legacyDir, "config.json"),
+			JSON.stringify({
+				superagents: {
+					modelTiers: { cheap: { model: "legacy-model" } },
+				},
+			}),
+			"utf-8",
+		);
+
+		const state = loadRuntimeConfigState(packageDir, userDir);
+
+		assert.equal(state.blocked, false);
+		assert.equal(state.configPath, path.join(userDir, "config.json"));
+		const cheapTier = state.config.superagents?.modelTiers?.cheap;
+		const model = typeof cheapTier === "object" ? cheapTier.model : cheapTier;
+		assert.equal(model, "legacy-model");
+	});
+
+	it("extracts only superagents from legacy config with pi-subagents keys", () => {
+		const packageDir = createTempConfigDir({
+			"default-config.json": JSON.stringify({ superagents: {} }),
+		});
+		const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "pi-config-shared-test-"));
+		const userDir = path.join(tempRoot, "pi-superagents");
+		const legacyDir = path.join(tempRoot, "subagent");
+		fs.mkdirSync(legacyDir, { recursive: true });
+		fs.writeFileSync(
+			path.join(legacyDir, "config.json"),
+			JSON.stringify({
+				asyncByDefault: true,
+				intercomBridge: { mode: "auto" },
+				maxSubagentDepth: 3,
+				superagents: {
+					modelTiers: { cheap: { model: "shared-model" } },
+				},
+			}),
+			"utf-8",
+		);
+
+		const state = loadRuntimeConfigState(packageDir, userDir);
+
+		assert.equal(state.blocked, false, "Config should not be blocked by pi-subagents keys");
+		assert.ok(
+			!state.diagnostics.some((d) => d.path === "asyncByDefault" || d.path === "intercomBridge" || d.path === "maxSubagentDepth"),
+			"Should not have diagnostics for pi-subagents keys",
+		);
+		const cheapTier = state.config.superagents?.modelTiers?.cheap;
+		const model = typeof cheapTier === "object" ? cheapTier.model : cheapTier;
+		assert.equal(model, "shared-model");
+	});
+
+	it("uses defaults when legacy config has no superagents section", () => {
+		const packageDir = createTempConfigDir({
+			"default-config.json": JSON.stringify({
+				superagents: {
+					modelTiers: { cheap: { model: "default-model" } },
+				},
+			}),
+		});
+		const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "pi-config-legacy-no-superagents-test-"));
+		const userDir = path.join(tempRoot, "pi-superagents");
+		const legacyDir = path.join(tempRoot, "subagent");
+		fs.mkdirSync(legacyDir, { recursive: true });
+		fs.writeFileSync(
+			path.join(legacyDir, "config.json"),
+			JSON.stringify({
+				asyncByDefault: true,
+				intercomBridge: { mode: "auto" },
+				maxSubagentDepth: 3,
+			}),
+			"utf-8",
+		);
+
+		const state = loadRuntimeConfigState(packageDir, userDir);
+
+		assert.equal(state.blocked, false, "Legacy pi-subagents-only config should not block pi-superagents");
+		assert.ok(
+			!state.diagnostics.some((d) => d.path === "asyncByDefault" || d.path === "intercomBridge" || d.path === "maxSubagentDepth"),
+			"Should not have diagnostics for pi-subagents-only legacy keys",
+		);
+		const cheapTier = state.config.superagents?.modelTiers?.cheap;
+		const model = typeof cheapTier === "object" ? cheapTier.model : cheapTier;
+		assert.equal(model, "default-model");
+	});
+
+	it("prefers new config over legacy config when both exist", () => {
+		const packageDir = createTempConfigDir({
+			"default-config.json": JSON.stringify({ superagents: {} }),
+		});
+		const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "pi-config-both-test-"));
+		const userDir = path.join(tempRoot, "pi-superagents");
+		const legacyDir = path.join(tempRoot, "subagent");
+
+		// Create legacy config
+		fs.mkdirSync(legacyDir, { recursive: true });
+		fs.writeFileSync(
+			path.join(legacyDir, "config.json"),
+			JSON.stringify({
+				superagents: {
+					modelTiers: { cheap: { model: "legacy-model" } },
+				},
+			}),
+			"utf-8",
+		);
+
+		// Create new config
+		fs.mkdirSync(userDir, { recursive: true });
+		fs.writeFileSync(
+			path.join(userDir, "config.json"),
+			JSON.stringify({
+				superagents: {
+					modelTiers: { cheap: { model: "new-model" } },
+				},
+			}),
+			"utf-8",
+		);
+
+		const state = loadRuntimeConfigState(packageDir, userDir);
+
+		assert.equal(state.blocked, false);
+		const cheapTier = state.config.superagents?.modelTiers?.cheap;
+		const model = typeof cheapTier === "object" ? cheapTier.model : cheapTier;
+		assert.equal(model, "new-model", "Should use new config, not legacy config");
+	});
+
 	it("loads bundled defaults and user overrides from separate directories", () => {
 		const defaultConfigDir = createTempConfigDir({
 			"default-config.json": JSON.stringify({

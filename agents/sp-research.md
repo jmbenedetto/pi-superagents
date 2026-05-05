@@ -1,9 +1,9 @@
 ---
 name: sp-research
 description: Superpowers research specialist for focused evidence gathering
-model: cheap
 tools: read, grep, find, ls
 maxSubagentDepth: 0
+model: cheap
 session-mode: lineage-only
 ---
 

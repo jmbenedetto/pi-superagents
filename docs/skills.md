@@ -125,13 +125,13 @@ For delegated subagent runs, missing skills are reported in the result summary a
 
 ## Status Visibility
 
-Open `/subagents-status` and select an active or recent subagent run to see the resolved skill names injected for that run. This includes default agent skills, runtime `skill` overrides, and TDD skill injection from the explicit `useTestDrivenDevelopment` tool parameter. Missing skills are shown as warnings in the selected run details.
+When Pi Subagents is installed, use `subagent({ action: "status" })` to inspect resolved skill names for active or recent runs. This includes default agent skills and runtime `skill` overrides such as `skill: "test-driven-development"`. Missing skills are shown as warnings in the run details.
 
 ## Role Output
 
-Skills and role prompts should return findings in the assistant response. Pi Superagents forwards that response through the `subagent` tool result and preserves optional debug artifacts outside the repository. Skills should not ask bounded roles to write handoff files like `implementer-report.md`, `spec-review.md`, or `code-review.md`. Skills should assume bounded Superpowers roles receive curated packet input, not inherited parent-session history, because built-in bounded roles default to `session-mode: lineage-only`.
+Skills and role prompts should return findings in the assistant response. Pi Subagents returns that response through the `subagent` tool result, while Pi Superagents preserves optional debug artifacts outside the repository. Skills should not ask bounded roles to write handoff files like `implementer-report.md`, `spec-review.md`, or `code-review.md`. Skills should assume bounded Superpowers roles receive curated packet input, not inherited parent-session history, because built-in bounded roles default to `context: "fresh"` via Pi Subagents.
 
-Subagent results are rendered as compact inline lines in the Pi conversation. Collapsed view shows the agent name, task, status, and current tool activity. Expanded view reveals model, skills, recent tools, output preview, errors, and artifact paths. This keeps long-running Superpowers workflows readable without scrolling through verbose output.
+Pi Subagents owns subagent result rendering and status details. Pi Superagents does not register a separate status UI.
 
 ## Release Notes
 

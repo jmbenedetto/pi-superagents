@@ -18,12 +18,10 @@ import { createMockPi, createTempDir, events, makeAgent, makeAgentConfigs, remov
 
 // Top-level await: try importing pi-dependent modules
 const execution = await tryImport<any>("./src/execution/execution.ts");
-const runHistory = await tryImport<any>("./src/execution/run-history.ts");
 const utils = await tryImport<any>("./src/shared/utils.ts");
-const available = !!(execution && runHistory && utils);
+const available = !!(execution && utils);
 
 const runSync = execution?.runSync;
-const globalRunHistory = runHistory?.globalRunHistory;
 const getFinalOutput = utils?.getFinalOutput;
 
 // Saved env vars for hermetic test isolation
@@ -379,29 +377,6 @@ void describe("single sync execution", { skip: !available ? "pi packages not ava
 
 		assert.equal(result.exitCode, 0);
 		assert.deepEqual(result.skills, ["override-skill"]);
-	});
-
-	void it("adds resolved skills to the active run history entry", async () => {
-		mockPi.onCall({ output: "Done" });
-		writeSkill(tempDir, "default-skill");
-		writeSkill(tempDir, "overlay-skill");
-		const agents = [makeAgent("worker", { skills: ["default-skill"] })];
-		const seenSkillSets: string[][] = [];
-
-		globalRunHistory.activeRuns.clear();
-		const result = await runSync(tempDir, agents, "worker", "Task", {
-			runId: "history-skills",
-			skills: ["overlay-skill"],
-			onUpdate: () => {
-				for (const entry of globalRunHistory.activeRuns.values()) {
-					seenSkillSets.push([...(entry.skills ?? [])]);
-				}
-			},
-		});
-
-		assert.equal(result.exitCode, 0);
-		assert.deepEqual(seenSkillSets.at(-1), ["overlay-skill"]);
-		assert.equal(globalRunHistory.activeRuns.size, 0);
 	});
 
 	void it("disables agent default skills when runtime skills are explicitly false", async () => {

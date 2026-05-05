@@ -1,9 +1,9 @@
 ---
 name: sp-recon
 description: Superpowers reconnaissance specialist for bounded task discovery
-model: cheap
 tools: read, grep, find, ls
 maxSubagentDepth: 0
+model: cheap
 session-mode: lineage-only
 ---
 

@@ -12,7 +12,6 @@ import { detectSubagentError, extractTextFromContent, extractToolArgsPreview, ge
 import { createJsonlWriter } from "./jsonl-writer.ts";
 import { applyThinkingSuffix, buildPiArgs, cleanupTempDir } from "./pi-args.ts";
 import { getPiSpawnCommand } from "./pi-spawn.ts";
-import { globalRunHistory } from "./run-history.ts";
 import { findMissingSubagentExtensionPath, resolveSubagentExtensions } from "./superagents-config.ts";
 import { inferExecutionRole, resolveModelForAgent, resolveRoleTools } from "./superpowers-policy.ts";
 
@@ -129,8 +128,6 @@ export async function runSync(runtimeCwd: string, agents: AgentConfig[], agentNa
 	result.progress = progress;
 
 	const startTime = Date.now();
-	const historyId = options.runId ? `${options.runId}-${agentName}-${index ?? 0}` : `run-${Date.now()}-${agentName}`;
-	globalRunHistory.startRun(historyId, { agent: agentName, task, skills: resolvedSkillNames, skillsWarning });
 
 	let artifactPathsResult: ArtifactPaths | undefined;
 	let jsonlPath: string | undefined;
@@ -183,14 +180,6 @@ export async function runSync(runtimeCwd: string, agents: AgentConfig[], agentNa
 			const fireUpdate = () => {
 				if (!onUpdate || processClosed) return;
 				progress.durationMs = Date.now() - startTime;
-
-				globalRunHistory.updateRun(historyId, {
-					duration: progress.durationMs,
-					model: result.model,
-					skills: result.skills,
-					skillsWarning: result.skillsWarning,
-					tokens: { total: result.usage.input + result.usage.output },
-				});
 
 				onUpdate({
 					content: [{ type: "text", text: getFinalOutput(result.messages) || "(running...)" }],
@@ -391,15 +380,6 @@ export async function runSync(runtimeCwd: string, agents: AgentConfig[], agentNa
 			result.truncation = truncationResult;
 		}
 	}
-
-	globalRunHistory.updateRun(historyId, {
-		duration: progress.durationMs,
-		model: result.model,
-		skills: result.skills,
-		skillsWarning: result.skillsWarning,
-		tokens: { total: result.usage.input + result.usage.output },
-	});
-	globalRunHistory.finishRun(historyId, result.exitCode === 0 ? "ok" : "error", result.error);
 
 	return result;
 }

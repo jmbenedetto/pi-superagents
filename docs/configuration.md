@@ -5,15 +5,21 @@
 Bundled defaults ship inside the package and provide sensible baseline values. User overrides live in:
 
 ```text
-~/.pi/agent/extensions/subagent/config.json
+~/.pi/agent/extensions/pi-superagents/config.json
 ```
 
 This file is user-owned. A fresh install creates it by copying the bundled defaults, including behavior flags for the built-in Superpowers entrypoint commands.
 
+> [!IMPORTANT]
+> `pi-superagents` config is separate from Pi Subagents config. Pi Subagents (when installed) stores its config at:
+> ```text
+> ~/.pi/agent/extensions/subagent/config.json
+> ```
+
 At runtime, user config merges on top of the bundled defaults. You only need to edit the settings you want to change. Full parseable examples are available in:
 
 ```text
-~/.pi/agent/extensions/subagent/config.example.json
+~/.pi/agent/extensions/pi-superagents/config.example.json
 ```
 
 > [!NOTE]
@@ -138,11 +144,9 @@ Superpowers role agents return their findings through Pi tool results. The runti
 
 Execution artifacts are still available when `artifacts` is enabled. Those files are written to the session artifact directory for debugging and truncation recovery, not to the repository root.
 
-## Compact Inline Subagent Results
+## Subagent Runtime Status
 
-Subagent tool results are rendered inline in the Pi conversation as compact, width-bounded lines. A collapsed view shows the subagent name, task, status, and live activity (e.g., current tool). Clicking or expanding the result reveals concise details: model, skills, recent tools, output preview, errors, and artifact paths. This keeps long-running Superpowers workflows readable without scrolling through verbose JSON or full Markdown output.
-
-The compact renderer is active for all `subagent` tool results produced by `pi-superagents`. `/subagents-status` remains available for inspecting active or recently completed runs in a dedicated overlay.
+Pi Subagents owns the `subagent` tool, result rendering, and runtime status. When both packages are installed, use `subagent({ action: "status" })` to inspect active or recently completed runs. `pi-superagents` only contributes Superpowers commands, prompts, config, role-agent publishing, and optional Plannotator review tools.
 
 ## Common Override Examples
 
@@ -216,7 +220,7 @@ Optional behavior flags in `config.json`:
 
 Command names must match `superpowers-<name>` or `sp-<name>` (lowercase alphanumeric and hyphens), and each behavior block must have a matching interactive entrypoint agent to register a slash command.
 
-Agent frontmatter may declare `session-mode: standalone | lineage-only | fork`. Built-in bounded roles ship with `lineage-only`.
+Agent frontmatter may declare `session-mode: standalone | lineage-only | fork` for pi-superagents internal handling. When delegating to Pi Subagents, use `context: "fresh" | "fork"` instead of `sessionMode` parameters in subagent calls. Built-in bounded roles ship with `lineage-only`, which maps to `context: "fresh"` in Pi Subagents.
 
 ## Model Tiers
 
@@ -241,7 +245,7 @@ Superpowers agents use abstract model tiers. Define tiers in your configuration:
 
 You can edit model tier mappings during an active PI session with `/sp-settings`. The model picker reads PI's authenticated model registry and writes the selected `provider/model` value back to `config.json`. Successful tier edits apply to future Superpowers subagents immediately; already-running subagents keep the model they were launched with.
 
-`/sp-settings` also edits command-scoped workflow toggles. Use `c` to select a command, then toggle `p` for Plannotator, `s` for subagents, `t` for TDD, or `w` for worktrees on that selected command preset. This avoids writing Plannotator or TDD settings into unrelated command presets.
+`/sp-settings` also edits command-scoped workflow toggles. Use `c` to select a command, then toggle `p` for Plannotator, `s` for subagent delegation, `t` for TDD guidance in task text/skills, or `w` for worktrees on that selected command preset. This avoids writing Plannotator or TDD settings into unrelated command presets.
 
 ## Direct Skill Interception
 
@@ -305,7 +309,7 @@ Skill selection is trigger-driven via `using-superpowers`. Do not preload domain
 
 ## Status and Settings
 
-Use `/subagents-status` to inspect active and recent subagent runs (`Ctrl+Alt+S`).
+When `pi-subagents` is installed, use `subagent({ action: "status" })` to inspect active and recent subagent runs.
 
 Use `/sp-settings` to inspect workflow settings and config diagnostics. In the settings overlay, `c` cycles the selected command; boolean toggles apply to that command only.
 

@@ -8,10 +8,13 @@ Worktree isolation is optional. Enable it for the entrypoint command that launch
 
 ```typescript
 // Parallel with worktree isolation when the launching command resolves worktrees.enabled: true
-{ tasks: [
-  { agent: "sp-implementer", task: "Implement auth" },
-  { agent: "sp-implementer", task: "Implement API" }
-], workflow: "superpowers" }
+{
+  tasks: [
+    { agent: "sp-implementer", task: "Implement auth" },
+    { agent: "sp-implementer", task: "Implement API" }
+  ],
+  context: "fresh"
+}
 ```
 
 Example behavior-only config for `/sp-implement`:
@@ -28,13 +31,13 @@ Example behavior-only config for `/sp-implement`:
 }
 ```
 
-When resolved worktree config is `enabled: false`, Superpowers treats that as a hard off switch. Root prompts must not ask for worktrees, and Superpowers subagent runs ignore `worktree: true` requests.
+When resolved worktree config is `enabled: false`, Superpowers treats that as a hard off switch. Root prompts must not ask for worktrees or pass `worktree: true` to Pi Subagents.
 
-After parallel completion, per-agent diff stats are appended to the output. Full patch files are written to the artifacts directory.
+When Pi Subagents worktree isolation is used, per-agent diff stats and patch artifacts are reported by Pi Subagents.
 
-While parallel worktree runs are active, `/subagents-status` shows each delegated subagent separately, including its resolved skills and any missing-skill warnings. Worktree isolation does not change entrypoint or role skill resolution; for example, `/sp-implement` root lifecycle skills and `sp-debug`'s `systematic-debugging` assignment are resolved before any child process runs in a worktree.
+When Pi Subagents is installed, use `subagent({ action: "status" })` to inspect each delegated subagent separately during parallel worktree runs, including resolved skills and missing-skill warnings. Worktree isolation does not change entrypoint or role skill resolution; for example, `/sp-implement` root lifecycle skills and `sp-debug`'s `systematic-debugging` assignment are resolved before any child process runs in a worktree.
 
-Agent reports themselves are returned inline through Pi tool results. Worktree isolation does not require `implementer-report.md`, `spec-review.md`, or `code-review.md` files in the worktree. Worktree isolation and session mode are separate concerns: packet handoff files live in the session artifact directory, not inside the worktree, and are cleaned up by the runtime.
+Agent reports themselves are returned inline through Pi tool results. Worktree isolation does not require `implementer-report.md`, `spec-review.md`, or `code-review.md` files in the worktree. Worktree isolation and Pi Subagents context are separate concerns: packet handoff files live in the session artifact directory, not inside the worktree, and are cleaned up by the runtime.
 
 ## Extension Loading
 

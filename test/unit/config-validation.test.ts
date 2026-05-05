@@ -131,6 +131,21 @@ void describe("config validation", () => {
 		);
 	});
 
+	void it("still blocks on true pi-superagents unknown top-level keys", () => {
+		const result = validateConfigObject({
+			superagents: {
+				modelTiers: { cheap: { model: "test-model" } },
+			},
+			unknownTopLevelKey: "invalid",
+		});
+
+		assert.equal(result.blocked, true);
+		assert.ok(
+			result.diagnostics.some((d) => d.path === "unknownTopLevelKey" && d.code === "unknown_key"),
+			"Should still block on unknown top-level keys in pi-superagents config",
+		);
+	});
+
 	void it("blocks wrong primitive types and invalid enum values in command presets", () => {
 		const result = validateConfigObject({
 			superagents: {

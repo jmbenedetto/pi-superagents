@@ -1,5 +1,14 @@
 # Changelog
 
+## [Unreleased]
+
+- **Documentation: Pi Subagents Integration Contract**
+  - Clarified that `pi-superagents` does not register the `subagent` tool; install `pi-subagents` separately when `useSubagents` is enabled.
+  - Updated config paths: Superagents config lives at `~/.pi/agent/extensions/pi-superagents/config.json`, Pi Subagents config at `~/.pi/agent/extensions/subagent/config.json`.
+  - Replaced `sessionMode` references with Pi Subagents `context: "fresh" | "fork"` parameters in documentation.
+  - Removed stale `/subagents-status` references (moved to Pi Subagents); use `subagent({ action: "status" })` for runtime status.
+  - Updated `config.example.json` to contain only Superagents keys, no Pi Subagents top-level keys.
+
 ## [0.8.0] - 2026-04-30
 
 - **Breaking: Agent Configuration**
